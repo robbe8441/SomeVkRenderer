@@ -4,12 +4,13 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+bytemuck = "1.14.1"
 env_logger = "0.11.1"
+imgui = "0.11.0"
 log = "0.4.20"
+smallvec = "1.13.1"
 thiserror = "1.0.56"
+tokio = {version = "1.35.1", features = ["full"]}
+wgpu = "0.19.1"
 winit = "0.29.10"
-
-
-[dependencies.tokio]
-version = "1.35.1"
 

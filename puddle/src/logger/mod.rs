@@ -1,5 +1,3 @@
-pub mod custom_errors;
-pub use custom_errors::*;
 pub use log::*;
 
 pub fn init() {
@@ -8,7 +6,7 @@ pub fn init() {
     env_logger::builder()
         .format_timestamp(None)
         .write_style(env_logger::WriteStyle::Always)
-        .filter_level(log::LevelFilter::max())
+        .filter_level(log::LevelFilter::Info)
         .init();
 
     debug!("Setting up logger");
