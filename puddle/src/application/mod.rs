@@ -14,13 +14,8 @@ pub struct Application {
 }
 
 impl Application {
+
     pub fn new() -> Self {
-        let app = Application::create_raw();
-
-        return app;
-    }
-
-    fn create_raw() -> Self {
         let tokio_runtime = tokio::runtime::Runtime::new().expect("failed to create tokio runtime");
 
         let (window, event_loop) = window_handler::ApplicationWindow::new(&tokio_runtime);
