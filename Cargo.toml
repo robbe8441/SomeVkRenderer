@@ -1,14 +1,11 @@
-workspace = {members = ["puddle"]}
-
-
 [package]
 name = "game_engine_test"
 version = "0.1.0"
 edition = "2021"
 
-
 [dependencies]
-puddle = {path = "./puddle/"}
+puddle = {path = "./puddle"}
+legion = {path = "./puddle/crates/legion"}
 
 [profile.release]
 opt-level = 3

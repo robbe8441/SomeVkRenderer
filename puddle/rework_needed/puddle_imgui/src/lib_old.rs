@@ -2,12 +2,14 @@ use std::fmt::format;
 use std::sync::Arc;
 use std::time::Instant;
 
-use super::super::*;
-use super::imgui_winit_support;
+use rendering::wgpu;
+use window::winit;
+mod wgpu_imgui;
+mod imgui_winit_support;
 
 pub struct PuddleImGuiRenderer {
-    pub imgui: puddle_imgui::Context,
-    renderer: puddle_imgui::Renderer,
+    pub imgui: wgpu_imgui::Context,
+    renderer: wgpu_imgui::Renderer,
     pub platform: imgui_winit_support::WinitPlatform,
     time : Instant
 }
@@ -15,7 +17,7 @@ pub struct PuddleImGuiRenderer {
 impl PuddleImGuiRenderer {
     pub fn draw_puddle_imgui(
         &mut self,
-        device: &wgpu::Device,
+        device: &rendering::wgpu::Device,
         queue: &wgpu::Queue,
         window: Arc<winit::window::Window>,
         encoder: &mut wgpu::CommandEncoder,
@@ -61,13 +63,13 @@ impl PuddleImGuiRenderer {
                 view: &view,
                 resolve_target: None,
                 ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                    load: rendering::wgpu::LoadOp::Clear(wgpu::Color {
                         r: 0.1,
                         g: 0.2,
                         b: 0.3,
                         a: 1.0,
                     }),
-                    store: wgpu::StoreOp::Store,
+                    store: rendering::wgpu::StoreOp::Store,
                 },
             })],
             depth_stencil_attachment: None,
@@ -115,7 +117,7 @@ impl render::Renderer {
         };
 
         let renderer =
-            puddle_imgui::Renderer::new(&mut imgui, &self.device, &self.queue, renderer_config);
+            wgpu_imgui::Renderer::new(&mut imgui, &self.device, &self.queue, renderer_config);
 
         self.imgui_render = Some(PuddleImGuiRenderer {
             imgui,

@@ -1,8 +1,5 @@
 #![allow(unused)]
-pub mod imgui_renderer;
-pub mod imgui_winit_support;
-
-use imgui::{
+pub use imgui::{
     Context, DrawCmd::Elements, DrawData, DrawIdx, DrawList, DrawVert, TextureId, Textures,
 };
 use smallvec::SmallVec;
@@ -10,8 +7,9 @@ use std::error::Error;
 use std::fmt;
 use std::mem::size_of;
 use std::sync::Arc;
-use wgpu::util::{BufferInitDescriptor, DeviceExt};
+use application::wgpu;
 use wgpu::*;
+use wgpu::util::{BufferInitDescriptor, DeviceExt};
 
 static VS_ENTRY_POINT: &str = "vs_main";
 static FS_ENTRY_POINT_LINEAR: &str = "fs_main_linear";

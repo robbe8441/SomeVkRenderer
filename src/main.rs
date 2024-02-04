@@ -1,24 +1,37 @@
+use std::fmt::Debug;
+
 use puddle::*;
+use puddle::legion::system;
 
-fn on_close(_: &()) {}
-
-fn on_render(delta_time: &f64) {
+#[system(for_each)]
+fn for_each(plr: &Player) {
+    dbg!(plr);
 }
 
-fn on_resize(size: &puddle::PhysicalSize<u32>) {
-    info!("new size : {:?}", size);
+#[system]
+fn print() {
+    println!("hello world");
+}
+
+#[allow(dead_code)]
+struct Location(f32, f32);
+
+#[allow(dead_code)]
+#[derive(Debug)]
+struct Player{
+    health : u32,
+    name : String
 }
 
 fn main() {
-    puddle::init();
     let mut app = Application::new();
+    app.world.extend(vec![
+        (Player { health : 100, name: "robbe".to_owned()}, Location(10.0, 20.0)),
+        (Player { health : 100, name: "steve".to_owned()}, Location(400.0, 30.0)),
+    ]);
 
-    app.window.set_title("Ultra cool Game");
+    app.add_system(ScheduleRunMode::Startup,print_system());
+    app.add_system(ScheduleRunMode::Update, for_each_system());
 
-    app.window.pre_render_event.connect(on_render);
-    app.window.on_close_requested.connect(on_close);
-    app.window.on_resize_event.connect(on_resize);
-
-    app.renderer.attach_imgui(app.window.window.clone());
     app.run();
 }

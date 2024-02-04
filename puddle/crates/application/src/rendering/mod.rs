@@ -1,7 +1,9 @@
-use std::{sync::Arc, time::Instant};
-
+use logger::*;
 use super::*;
-mod renderpass;
+use std::{sync::Arc, time::Instant};
+use wgpu::core::command::bundle_ffi::wgpu_render_bundle_draw;
+use legion::*;
+pub use wgpu;
 
 pub struct Renderer {
     pub device: wgpu::Device,
@@ -10,16 +12,31 @@ pub struct Renderer {
 
     pub surface: wgpu::Surface<'static>,
     pub adapter: wgpu::Adapter,
-
-    pub imgui_render: Option<puddle_imgui::imgui_renderer::PuddleImGuiRenderer>,
 }
 
-impl Renderer {
-    pub fn new(
-        tokio_runtime: &tokio::runtime::Runtime,
-        window: Arc<winit::window::Window>,
-    ) -> Renderer {
 
+impl Renderer {
+    pub fn draw(&mut self) {
+
+        let frame = match self.surface.get_current_texture() {
+            Ok(frame) => frame,
+            Err(e) => {
+                warn!("dropped frame: {e:?}");
+                return;
+            }
+        };
+
+        let view = frame
+            .texture
+            .create_view(&wgpu::TextureViewDescriptor::default());
+
+        let command_encoder = self.device.create_command_encoder(&wgpu::CommandEncoderDescriptor {label : None });
+
+        self.queue.submit(Some(command_encoder.finish()));
+        frame.present();
+    }
+
+    pub fn new(window : Arc<winit::window::Window>, tokio_runtime : &tokio::runtime::Runtime) -> Self {
         info!("setting up renderer");
         let start_time = Instant::now();
 
@@ -61,48 +78,13 @@ impl Renderer {
 
         surface.configure(&device, &surface_desc);
 
-        info!("took {}s to load renderer", start_time.elapsed().as_secs_f64() );
-
-        Renderer {
-            surface,
-            adapter,
-            device,
+        let renderer = Renderer {
+            surface, surface_desc, device, adapter,
             queue,
-            surface_desc,
-            imgui_render: None,
-        }
-    }
-}
-
-impl Renderer {
-    pub fn draw(&mut self, window: Arc<winit::window::Window>) {
-        let frame = match self.surface.get_current_texture() {
-            Ok(frame) => frame,
-            Err(e) => {
-                warn!("dropped frame: {e:?}");
-                return;
-            }
         };
 
-        let view = frame
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
+        info!("took {}s to load renderer", start_time.elapsed().as_secs_f64());
 
-        let mut encoder: wgpu::CommandEncoder = self
-            .device
-            .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
-
-        if self.imgui_render.is_some() {
-            self.imgui_render.as_mut().unwrap().draw_puddle_imgui(
-                &self.device,
-                &self.queue,
-                window,
-                &mut encoder,
-                &view,
-            );
-        }
-
-        self.queue.submit(Some(encoder.finish()));
-        frame.present();
+            renderer
     }
 }
