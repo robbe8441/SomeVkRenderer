@@ -1,0 +1,10 @@
+[package]
+name = "puddle_internal"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+logger = { path = "../logger" }
+legion = { path = "../legion" }
+application = { path = "../application"}

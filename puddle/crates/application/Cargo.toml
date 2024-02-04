@@ -1,0 +1,12 @@
+[package]
+name = "application"
+version = "0.1.0"
+edition = "2021"
+
+
+[dependencies]
+logger = { path = "../logger" }
+legion = { path = "../legion" }
+tokio = { version = "1.35.1", features = ["full"] }
+wgpu = "0.19.1"
+winit = "0.29.10"
