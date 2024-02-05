@@ -7,7 +7,6 @@ use std::error::Error;
 use std::fmt;
 use std::mem::size_of;
 use std::sync::Arc;
-use application::wgpu;
 use wgpu::*;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
 

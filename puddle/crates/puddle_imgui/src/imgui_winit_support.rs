@@ -76,19 +76,21 @@
 
 use imgui::{self, BackendFlags, ConfigFlags, Context, Io, Key, Ui};
 use std::cmp::Ordering;
+use std::sync::Arc;
 
 // Re-export winit to make it easier for users to use the correct version.
-use application::winit::{
+use winit::{
     dpi::{LogicalPosition, LogicalSize},
     keyboard::{Key as WinitKey, KeyLocation, NamedKey},
     platform::modifier_supplement::KeyEventExtModifierSupplement,
 };
 
-use application::winit::{
+use winit::{
     error::ExternalError,
     event::{ElementState, Event, MouseButton, MouseScrollDelta, TouchPhase, WindowEvent},
     window::{CursorIcon as MouseCursor, Window},
 };
+use log::error;
 
 /// winit backend platform state
 #[derive(Debug)]
@@ -181,7 +183,7 @@ fn to_imgui_mouse_button(button: MouseButton) -> Option<imgui::MouseButton> {
     }
 }
 
-fn to_imgui_key(key: application::winit::keyboard::Key, location: KeyLocation) -> Option<Key> {
+fn to_imgui_key(key: winit::keyboard::Key, location: KeyLocation) -> Option<Key> {
     match (key.as_ref(), location) {
         (WinitKey::Named(NamedKey::Tab), _) => Some(Key::Tab),
         (WinitKey::Named(NamedKey::ArrowLeft), _) => Some(Key::LeftArrow),
@@ -330,7 +332,7 @@ impl WinitPlatform {
     ///
     /// * framebuffer scale (= DPI factor) is set
     /// * display size is set
-    pub fn attach_window(&mut self, io: &mut Io, window: &Window, hidpi_mode: HiDpiMode) {
+    pub fn attach_window(&mut self, io: &mut Io, window: Arc<Window>, hidpi_mode: HiDpiMode) {
         let (hidpi_mode, hidpi_factor) = hidpi_mode.apply(window.scale_factor());
         self.hidpi_mode = hidpi_mode;
         self.hidpi_factor = hidpi_factor;
@@ -351,7 +353,7 @@ impl WinitPlatform {
     /// your application to use the same logical coordinates as imgui-rs.
     pub fn scale_size_from_winit(
         &self,
-        window: &Window,
+        window: Arc<Window>,
         logical_size: LogicalSize<f64>,
     ) -> LogicalSize<f64> {
         match self.hidpi_mode {
@@ -367,7 +369,7 @@ impl WinitPlatform {
     /// your application to use the same logical coordinates as imgui-rs.
     pub fn scale_pos_from_winit(
         &self,
-        window: &Window,
+        window: Arc<Window>,
         logical_pos: LogicalPosition<f64>,
     ) -> LogicalPosition<f64> {
         match self.hidpi_mode {
@@ -383,7 +385,7 @@ impl WinitPlatform {
     /// your application to use the same logical coordinates as imgui-rs.
     pub fn scale_pos_for_winit(
         &self,
-        window: &Window,
+        window: Arc<Window>,
         logical_pos: LogicalPosition<f64>,
     ) -> LogicalPosition<f64> {
         match self.hidpi_mode {
@@ -400,7 +402,8 @@ impl WinitPlatform {
     /// * window size / dpi factor changes are applied
     /// * keyboard state is updated
     /// * mouse state is updated
-    pub fn handle_event<T>(&mut self, io: &mut Io, window: &Window, event: &Event<T>) {
+    pub fn handle_event<T>(&mut self, io: &mut Io, window: Arc<Window>, event: &Event<T>) {
+
         match *event {
             Event::WindowEvent {
                 window_id,
@@ -425,7 +428,7 @@ impl WinitPlatform {
             _ => (),
         }
     }
-    fn handle_window_event(&mut self, io: &mut Io, window: &Window, event: &WindowEvent) {
+    fn handle_window_event(&mut self, io: &mut Io, window: Arc<Window>, event: &WindowEvent) {
         match *event {
             WindowEvent::Resized(physical_size) => {
                 let logical_size = physical_size.to_logical(window.scale_factor());
@@ -541,10 +544,10 @@ impl WinitPlatform {
     /// This function performs the following actions:
     ///
     /// * mouse cursor is repositioned (if requested by imgui-rs)
-    pub fn prepare_frame(&self, io: &mut Io, window: &Window) -> Result<(), ExternalError> {
+    pub fn prepare_frame(&self, io: &mut Io, window: Arc<Window>) -> Result<(), ExternalError> {
         if io.want_set_mouse_pos {
             let logical_pos = self.scale_pos_for_winit(
-                window,
+                window.clone(),
                 LogicalPosition::new(f64::from(io.mouse_pos[0]), f64::from(io.mouse_pos[1])),
             );
             window.set_cursor_position(logical_pos)

@@ -9,5 +9,7 @@ edition = "2021"
 imgui = { path = "imgui-rs/imgui" }
 smallvec = "1.13.1"
 bytemuck = "1.14.1"
-application = { path = "../../crates/application" }
-legion = { path = "../../crates/legion" }
+legion = { path = "../legion" }
+wgpu = "0.19.1"
+winit = "0.29.10"
+log = "0.4.20"

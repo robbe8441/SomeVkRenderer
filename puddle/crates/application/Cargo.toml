@@ -10,3 +10,5 @@ legion = { path = "../legion" }
 tokio = { version = "1.35.1", features = ["full"] }
 wgpu = "0.19.1"
 winit = "0.29.10"
+puddle_imgui = { path = "../puddle_imgui" }
+log = "0.4.20"
