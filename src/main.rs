@@ -30,6 +30,10 @@ fn main() {
         (Player { health : 100, name: "steve".to_owned()}, Location(400.0, 30.0)),
     ]);
 
+    app.add_plugin(WindowPlugin);
+    app.add_plugin(DefaultRenderer);
+    app.add_plugin(ImGuiPlugin);
+
     //app.add_system(ScheduleRunMode::Startup,print_system());
     //app.add_system(ScheduleRunMode::Update, for_each_system());
 

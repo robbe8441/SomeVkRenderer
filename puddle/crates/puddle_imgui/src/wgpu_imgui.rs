@@ -7,8 +7,8 @@ use std::error::Error;
 use std::fmt;
 use std::mem::size_of;
 use std::sync::Arc;
-use wgpu::*;
 use wgpu::util::{BufferInitDescriptor, DeviceExt};
+use wgpu::*;
 
 static VS_ENTRY_POINT: &str = "vs_main";
 static FS_ENTRY_POINT_LINEAR: &str = "fs_main_linear";

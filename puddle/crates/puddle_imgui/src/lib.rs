@@ -1,34 +1,45 @@
-use std::sync::Arc;
+use application::DeltaTime;
+use legion::system;
+use log::{error, info};
+use renderer::{PuddleRenderer, RenderContext};
+use std::sync::{Arc, Mutex};
 use std::time::Instant;
-use wgpu::SurfaceConfiguration;
+use wgpu::naga::RelationalFunction::Any;
+use window::PuddleWindow;
+use winit::window::Window;
 
-mod wgpu_imgui;
 mod imgui_winit_support;
+mod wgpu_imgui;
 
+pub struct ImGuiPlugin;
 
-pub struct PuddleImGuiRenderer {
-    pub imgui:wgpu_imgui::Context,
+struct ImGuiRenderer {
     renderer: wgpu_imgui::Renderer,
-    pub platform: imgui_winit_support::WinitPlatform,
-    time : Instant
+    platform: imgui_winit_support::WinitPlatform,
+    imgui: imgui::Context,
+    window: PuddleWindow,
 }
 
+static mut IMGUI_RENDERER: Option<ImGuiRenderer> = None;
 
-impl PuddleImGuiRenderer {
-
-    pub fn new( window : Arc<winit::window::Window>, device : &wgpu::Device, queue : &wgpu::Queue, surface_desc: &SurfaceConfiguration ) -> Self {
+impl application::Plugin for ImGuiPlugin {
+    fn finish(&mut self, app: &mut application::Application) {
         let mut imgui = imgui::Context::create();
         let mut platform = imgui_winit_support::WinitPlatform::init(&mut imgui);
 
+        let window = app.resources.get::<PuddleWindow>().unwrap();
+        info!("requesting renderer");
+        let mut puddle_renderer = app.resources.get_mut::<renderer::PuddleRenderer>().unwrap();
+
         platform.attach_window(
             imgui.io_mut(),
-            window.clone(),
+            window.get_cloned(),
             imgui_winit_support::HiDpiMode::Default,
         );
 
         imgui.set_ini_filename(None);
 
-        let hidpi_factor = window.scale_factor();
+        let hidpi_factor = window.get().scale_factor();
         let font_size = (13.0 * hidpi_factor) as f32;
         imgui.io_mut().font_global_scale = (1.0 / hidpi_factor) as f32;
 
@@ -44,80 +55,102 @@ impl PuddleImGuiRenderer {
             }]);
 
         let renderer_config = wgpu_imgui::RendererConfig {
-            texture_format: surface_desc.format,
+            texture_format: puddle_renderer.surface_config.format,
             ..Default::default()
         };
 
-        let renderer = wgpu_imgui::Renderer::new(&mut imgui, &device, &queue, renderer_config);
-        let time = Instant::now();
+        let imgui_renderer = wgpu_imgui::Renderer::new(
+            &mut imgui,
+            &puddle_renderer.device,
+            &puddle_renderer.queue,
+            renderer_config,
+        );
 
-        Self {
-            imgui, renderer, platform, time
-        }
+        let renderer = ImGuiRenderer {
+            imgui,
+            platform,
+            renderer: imgui_renderer,
+            window: window.clone(),
+        };
+
+        error!("adding draw pass");
+        puddle_renderer.add_renderpass(draw);
+        app.on_event.connect(handle_event);
+
+        unsafe { IMGUI_RENDERER = Some(renderer) };
+    }
+}
+
+fn handle_event(event : &winit::event::Event<()>) {
+    let imgui = unsafe {IMGUI_RENDERER.take()};
+    if let Some(mut imgui) = imgui {
+        imgui.platform.handle_event(imgui.imgui.io_mut(), imgui.window.get_cloned() ,event);
+        unsafe {IMGUI_RENDERER = Some(imgui)};
+    }
+}
+
+fn draw(renderer: &mut PuddleRenderer, context: &mut RenderContext) {
+    let mut imgui_renderer = unsafe { IMGUI_RENDERER.take() }.unwrap();
+    let window = &imgui_renderer.window;
+    imgui_renderer
+        .platform
+        .prepare_frame(imgui_renderer.imgui.io_mut(), window.get_cloned())
+        .expect("failed to prepeare frame");
+    let ui = imgui_renderer.imgui.frame();
+
+    imgui_renderer.platform.prepare_render(ui, window.get());
+
+    {
+        let window = ui.window("Hello world");
+        window
+            .size([300.0, 100.0], imgui::Condition::FirstUseEver)
+            .build(|| {
+                ui.text("Hello world!");
+                ui.text("This...is...imgui-rs on WGPU!");
+                ui.separator();
+                let mouse_pos = ui.io().mouse_pos;
+                ui.text(format!(
+                    "Mouse Position: ({:.1},{:.1})",
+                    mouse_pos[0], mouse_pos[1]
+                ));
+            });
+
+        let window = ui.window("Hello too");
+        window
+            .size([400.0, 200.0], imgui::Condition::FirstUseEver)
+            .position([400.0, 200.0], imgui::Condition::FirstUseEver)
+            .build(|| {
+                ui.text(format!("Frametime: {}", 1));
+            });
+
+        ui.show_demo_window(&mut true);
     }
 
-    pub fn draw_imgui(
-        &mut self, window : Arc<winit::window::Window>,
-        command_encoder : &mut wgpu::CommandEncoder,
-        view : &mut wgpu::TextureView,
-        device : &wgpu::Device,
-        queue: &wgpu::Queue
-    ) {
-        self.platform.prepare_frame(self.imgui.io_mut(), window.clone()).expect("failed to prepeare frame");
-        let ui = self.imgui.frame();
+    let mut rpass = context.begin_render_pass(wgpu::RenderPassDescriptor {
+        label: Some("Imgui RenderPass"),
+        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            view: &renderer.view.as_ref().unwrap(),
+            resolve_target: None,
+            ops: wgpu::Operations {
+                load: wgpu::LoadOp::Load,
+                store: wgpu::StoreOp::Store,
+            },
+        })],
+        depth_stencil_attachment: None,
+        occlusion_query_set: None,
+        timestamp_writes: None,
+    });
+    imgui_renderer
+        .renderer
+        .render(
+            imgui_renderer.imgui.render(),
+            &renderer.queue,
+            &renderer.device,
+            &mut rpass,
+        )
+        .expect("Rendering failed");
 
-        self.platform.prepare_render(ui, &window);
+    drop(rpass);
 
-        {
-            let window = ui.window("Hello world");
-            window
-                .size([300.0, 100.0], imgui::Condition::FirstUseEver)
-                .build(|| {
-                    ui.text("Hello world!");
-                    ui.text("This...is...imgui-rs on WGPU!");
-                    ui.separator();
-                    let mouse_pos = ui.io().mouse_pos;
-                    ui.text(format!(
-                        "Mouse Position: ({:.1},{:.1})",
-                        mouse_pos[0], mouse_pos[1]
-                    ));
-                });
-
-            let window = ui.window("Hello too");
-            window
-                .size([400.0, 200.0], imgui::Condition::FirstUseEver)
-                .position([400.0, 200.0], imgui::Condition::FirstUseEver)
-                .build(|| {
-                    ui.text(format!("Frametime: {}", self.time.elapsed().as_secs_f32()));
-                    ui.text(format!("FPS : {}", (1.0 / self.time.elapsed().as_secs_f64()).floor() ));
-                });
-
-            self.time = Instant::now();
-            ui.show_demo_window(&mut true);
-        }
-
-        let mut rpass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: None,
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
-                        r: 0.1,
-                        g: 0.2,
-                        b: 0.3,
-                        a: 1.0,
-                    }),
-                    store: wgpu::StoreOp::Store,
-                },
-            })],
-            depth_stencil_attachment: None,
-            occlusion_query_set: None,
-            timestamp_writes: None,
-        });
-
-        self.renderer
-            .render(self.imgui.render(), &queue, &device, &mut rpass)
-            .expect("Rendering failed");
-    }
+    unsafe { IMGUI_RENDERER = Some(imgui_renderer) };
 }

@@ -1,0 +1,11 @@
+[package]
+name = "renderer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+window = { path = "../window" }
+application = { path = "../application" }
+logger = { path = "../logger" }
+legion = { path = "../legion" }
+wgpu = "0.19.1"

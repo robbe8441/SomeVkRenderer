@@ -1,14 +1,21 @@
-pub fn add(left: usize, right: usize) -> usize {
-    left + right
+pub struct EventDispatcher<T = ()> {
+    handlers: Vec<Box<dyn Fn(&T)>>,
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
+impl<T> EventDispatcher<T> {
+    pub fn new() -> Self {
+        Self {
+            handlers: Vec::new(),
+        }
+    }
 
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
+    pub fn connect(&mut self, callback: impl Fn(&T) + 'static) {
+        self.handlers.push(Box::new(callback));
+    }
+
+    pub fn fire(&self, event: &T) {
+        for handler in &self.handlers {
+            handler(event);
+        }
     }
 }

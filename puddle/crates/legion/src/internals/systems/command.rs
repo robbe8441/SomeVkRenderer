@@ -27,6 +27,8 @@ use crate::{
         systems::resources::Resources,
         world::{World, WorldId},
     },
+    query::Any,
+    systems::Resource,
     world::Allocate,
 };
 
@@ -274,6 +276,11 @@ impl CommandBuffer {
             entity_allocator: Allocate::new(),
         }
     }
+
+    /// insert ad resource
+    //pub fn instert_resource<T : Resource>(&mut self, resource:T ) {
+    //self.pending_resources.push(Arc::new(resource));
+    //}
 
     /// Gets the ID of the world this command buffer belongs to.
     pub fn world(&self) -> WorldId {

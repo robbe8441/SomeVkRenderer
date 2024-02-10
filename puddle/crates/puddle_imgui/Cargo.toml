@@ -7,6 +7,10 @@ edition = "2021"
 
 [dependencies]
 imgui = { path = "imgui-rs/imgui" }
+application = { path = "../application" }
+window = { path = "../window" }
+renderer = { path = "../renderer" }
+
 smallvec = "1.13.1"
 bytemuck = "1.14.1"
 legion = { path = "../legion" }

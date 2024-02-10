@@ -85,12 +85,12 @@ use winit::{
     platform::modifier_supplement::KeyEventExtModifierSupplement,
 };
 
+use log::error;
 use winit::{
     error::ExternalError,
     event::{ElementState, Event, MouseButton, MouseScrollDelta, TouchPhase, WindowEvent},
     window::{CursorIcon as MouseCursor, Window},
 };
-use log::error;
 
 /// winit backend platform state
 #[derive(Debug)]
@@ -403,7 +403,6 @@ impl WinitPlatform {
     /// * keyboard state is updated
     /// * mouse state is updated
     pub fn handle_event<T>(&mut self, io: &mut Io, window: Arc<Window>, event: &Event<T>) {
-
         match *event {
             Event::WindowEvent {
                 window_id,

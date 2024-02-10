@@ -147,9 +147,9 @@ impl<'a, T: Resource> ResourceSet<'a> for Write<T> {
     }
 }
 
-fn panic_nonexistent_resource(type_id: &ResourceTypeId) -> ! {
+fn panic_nonexistent_resource(_type_id: &ResourceTypeId) -> ! {
     #[cfg(debug_assertions)]
-    panic!("resource {} does not exist", type_id.name);
+    panic!("resource {} does not exist", _type_id.name);
     #[cfg(not(debug_assertions))]
     panic!("some resource does not exist");
 }

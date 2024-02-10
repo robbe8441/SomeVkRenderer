@@ -1,7 +1,6 @@
-pub use log::*;
 pub use eyre::Result;
+pub use log::*;
 pub use thiserror::Error;
-
 
 pub fn init() {
     std::env::set_var("RUST_LOG", "trace");

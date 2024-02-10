@@ -8,3 +8,6 @@ edition = "2021"
 logger = { path = "../logger" }
 legion = { path = "../legion" }
 application = { path = "../application"}
+window = { path = "../window" }
+renderer = { path = "../renderer" }
+puddle_imgui = { path = "../puddle_imgui" }
