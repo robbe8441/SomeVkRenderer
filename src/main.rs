@@ -18,24 +18,24 @@ struct Location(f32, f32);
 
 #[allow(dead_code)]
 #[derive(Debug)]
-struct Player{
+struct Player {
     health : u32,
-    name : String
+    name : String,
 }
 
 fn main() {
     let mut app = Application::new();
+
     app.world.extend(vec![
         (Player { health : 100, name: "robbe".to_owned()}, Location(10.0, 20.0)),
         (Player { health : 100, name: "steve".to_owned()}, Location(400.0, 30.0)),
     ]);
 
+    
+
     app.add_plugin(WindowPlugin);
     app.add_plugin(DefaultRenderer);
     app.add_plugin(ImGuiPlugin);
-
-    //app.add_system(ScheduleRunMode::Startup,print_system());
-    //app.add_system(ScheduleRunMode::Update, for_each_system());
 
     app.run();
 }

@@ -15,8 +15,9 @@ pub struct PuddleRenderer<'a> {
     pub device: Arc<wgpu::Device>,
     pub queue: wgpu::Queue,
     pub surface_config: wgpu::SurfaceConfiguration,
-    pub render_passes: Vec<Arc<dyn Fn(&mut PuddleRenderer, &mut RenderContext)>>,
+    pub render_passes: Option<Vec<Arc<dyn Fn(&mut PuddleRenderer, &mut RenderContext)>>>,
     pub view: Option<wgpu::TextureView>,
+    pub schecule : legion::systems::Builder,
 }
 
 pub struct DefaultRenderer;
@@ -41,6 +42,7 @@ fn clear_screen(renderer: &mut PuddleRenderer, context: &mut RenderContext) {
 }
 
 fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
+
     let mut renderer = match resources.get_mut::<PuddleRenderer>() {
         Some(r) => r,
         None => {
@@ -59,24 +61,14 @@ fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
 
     let mut render_context = context::RenderContext::new(renderer.device.clone());
 
-    renderer.view = Some(
-        frame
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default()),
-    );
+    let view = frame.texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-    for rpass in <Vec<
-        Arc<dyn for<'a, 'b, 'c, 'd> Fn(&'a mut PuddleRenderer<'b>, &'c mut RenderContext<'d>)>,
-    > as Clone>::clone(&renderer.render_passes)
-    .into_iter()
-    {
-        rpass(&mut renderer, &mut render_context);
-    }
+    resources.insert(view);
+    resources.insert(render_context);
 
     renderer.queue.submit(render_context.finish().into_iter());
     frame.present();
 }
-
 
 impl application::Plugin for DefaultRenderer {
     fn second_build_stage(&mut self, app: &mut application::Application) {
@@ -87,6 +79,7 @@ impl application::Plugin for DefaultRenderer {
             .get_mut::<window::PuddleWindow>()
             .expect("first setup window")
             .clone();
+
         let tokio_runtime = app
             .resources
             .get_mut::<Arc<application::tokio::runtime::Runtime>>()
@@ -139,8 +132,9 @@ impl application::Plugin for DefaultRenderer {
             instance,
             queue,
             surface_config,
-            render_passes: vec![],
+            render_passes: vec![].into(),
             view: None,
+            schecule : legion::systems::Builder::new(),
         };
 
         renderer.add_renderpass(clear_screen);
@@ -161,6 +155,8 @@ impl PuddleRenderer<'_> {
         &mut self,
         rpass: impl Fn(&mut PuddleRenderer, &mut RenderContext) + 'static,
     ) {
-        self.render_passes.push(Arc::new(rpass));
+        if let Some(ref mut rpasses) = self.render_passes {
+            rpasses.push(Arc::new(rpass));
+        }
     }
 }
