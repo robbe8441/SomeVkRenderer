@@ -1,21 +1,33 @@
-pub struct EventDispatcher<T = ()> {
-    handlers: Vec<Box<dyn Fn(&T)>>,
+#![allow(unused, dead_code)]
+
+pub struct EventHandler<T> {
+    connections : Vec<Box<dyn Fn(&mut T)>>
 }
 
-impl<T> EventDispatcher<T> {
+
+impl <T>EventHandler<T> {
     pub fn new() -> Self {
         Self {
-            handlers: Vec::new(),
+            connections : Vec::new()
         }
     }
 
-    pub fn connect(&mut self, callback: impl Fn(&T) + 'static) {
-        self.handlers.push(Box::new(callback));
+    pub fn fire(&self, data : &mut T) {
+        for func in self.connections.iter() {
+            func(data);
+        }
     }
 
-    pub fn fire(&self, event: &T) {
-        for handler in &self.handlers {
-            handler(event);
-        }
+    pub fn connect(&mut self, func : impl Fn(&mut T) + 'static) {
+        self.connections.push(Box::new(func));
     }
 }
+
+
+
+
+
+
+
+
+

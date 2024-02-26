@@ -3,8 +3,10 @@ name = "puddle"
 version = "0.1.0"
 edition = "2021"
 
-[workspace]
-members = ["crates/*"]
-
 [dependencies]
-puddle_internal = {path = "crates/puddle_internal"}
+application = { path = "./crates/application" }
+rendering = { path = "./crates/rendering" }
+window = { path = "./crates/window" }
+texture = { path = "./crates/texture" }
+events = { path = "./crates/events" }
+legion = "0.4.0"

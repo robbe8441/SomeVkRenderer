@@ -4,6 +4,6 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-legion = { path = "../legion" }
 winit = "0.29.10"
 application = { path = "../application" }
+events = { path = "../events" }

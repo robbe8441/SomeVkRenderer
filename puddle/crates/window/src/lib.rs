@@ -1,44 +1,40 @@
-use application::Application;
-use std::sync::{Arc, Mutex};
-use winit::error::EventLoopError;
-use winit::event_loop::{EventLoop, EventLoopBuilder, EventLoopWindowTarget};
-use winit::window::{Window, WindowBuilder};
+#![allow(unused, dead_code)]
+pub mod event_list;
+mod event_runner;
+pub use winit;
+mod input;
+pub use input::InputList;
+
+use application::{Application, Plugin};
+use std::{collections::HashMap, sync::Arc};
+
+use winit::{event_loop::EventLoop, window::Window};
 
 pub struct WindowPlugin;
-pub struct PuddleWindow(Arc<Window>);
-pub struct PuddleEventLoop<T: 'static>(EventLoop<T>);
 
-impl application::Plugin for WindowPlugin {
-    fn build(&mut self, app: &mut Application) {
-        let window: Window = WindowBuilder::new()
-            .with_title("Puddle Application")
-            .with_theme(Some(winit::window::Theme::Dark))
-            .build(&app.event_loop)
-            .expect("failed to create window");
-
-        let arc_window = PuddleWindow(Arc::new(window));
-        app.resources.insert(arc_window);
-    }
+pub struct PuddleWindow {
+    pub window: Arc<Window>,
 }
 
-impl PuddleWindow {
-    pub fn set_tite(&self, title: &str) {
-        self.0.set_title(title)
-    }
+impl Plugin for WindowPlugin {
+    fn build(&mut self, app: &mut Application) {
+        let event_loop = EventLoop::new().unwrap();
+        let window = Window::new(&event_loop).unwrap();
 
-    pub fn get(&self) -> &Arc<Window> {
-        &self.0
-    }
+        let puddle_window = PuddleWindow {
+            window: Arc::new(window),
+        };
 
-    pub fn inner_size(&self) -> winit::dpi::PhysicalSize<u32> {
-        self.0.inner_size()
-    }
+        app.resources.insert(puddle_window);
+        app.resources.insert(event_loop);
 
-    pub fn clone(&self) -> Self {
-        PuddleWindow(self.0.clone())
-    }
 
-    pub fn get_cloned(&self) -> Arc<Window> {
-        self.0.clone()
+        use events::EventHandler;
+        app.resources.insert( EventHandler::<event_list::Resize>::new() );
+        app.resources.insert( EventHandler::<event_list::DeviceEvent>::new() );
+
+        app.resources.insert(InputList(HashMap::new()));
+
+        app.runner = Some(Box::new(event_runner::runner));
     }
 }
