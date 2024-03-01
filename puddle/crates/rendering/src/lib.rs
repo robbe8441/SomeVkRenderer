@@ -1,21 +1,24 @@
 #![allow(unused, dead_code)]
 mod draw;
+mod instaincing;
 mod event_listener;
+mod camera;
+mod materials;
 mod meshes;
 mod render_context;
-mod instances;
-use instances::camera::CameraUniform;
+
+pub use camera::{Camera, CameraUniform};
+pub use instaincing::*;
+pub use materials::*;
 pub use meshes::*;
-pub use instances::camera::Camera;
+pub use wgpu;
+pub struct RenderPlugin;
 
 use application::Plugin;
 use std::sync::Arc;
-pub use wgpu;
-
-pub struct RenderPlugin;
 
 pub struct Renderer {
-    pub device: wgpu::Device,
+    pub device: Arc<wgpu::Device>,
     pub queue: wgpu::Queue,
     pub surface: wgpu::Surface<'static>,
     pub surface_config: wgpu::SurfaceConfiguration,
@@ -26,10 +29,9 @@ pub struct CameraBindGroup(pub wgpu::BindGroup);
 pub struct CameraBindGroupLayout(pub Arc<wgpu::BindGroupLayout>);
 
 struct RenderCamera {
-    pub buffer : wgpu::Buffer,
-    pub uniform : CameraUniform,
+    pub buffer: wgpu::Buffer,
+    pub uniform: CameraUniform,
 }
-
 
 struct RenderEvents {
     resized: Option<window::event_list::Resize>,
@@ -106,11 +108,12 @@ impl Plugin for RenderPlugin {
         let render_events = Arc::new(std::sync::Mutex::new(RenderEvents { resized: None }));
         event_listener::init(&mut app.resources, render_events.clone());
 
-        /// setup camera 
-        let mut cam = instances::camera::Camera::default(surface_config.width as f32 / surface_config.height as f32);
-        let mut camera_uniform = instances::camera::CameraUniform::new();
+        /// setup camera
+        let mut cam = Camera::default(
+            surface_config.width as f32 / surface_config.height as f32,
+        );
+        let mut camera_uniform = CameraUniform::new();
         camera_uniform.update_view_proj(&cam);
-
 
         let camera_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
@@ -142,20 +145,20 @@ impl Plugin for RenderPlugin {
             label: Some("camera_bind_group"),
         });
 
-
         let cam_buffers = RenderCamera {
-            buffer : camera_buffer,
-            uniform : camera_uniform,
+            buffer: camera_buffer,
+            uniform: camera_uniform,
         };
 
         app.resources.insert(CameraBindGroup(camera_bind_group));
-        app.resources.insert(CameraBindGroupLayout(Arc::new(camera_bind_group_layout)));
+        app.resources
+            .insert(CameraBindGroupLayout(Arc::new(camera_bind_group_layout)));
         app.resources.insert(cam_buffers);
         app.resources.insert(cam);
         app.resources.insert(render_events);
         app.resources.insert(Renderer {
             surface,
-            device,
+            device : device.into(),
             queue,
             surface_config,
             adapter,

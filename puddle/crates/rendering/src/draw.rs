@@ -1,13 +1,15 @@
 use std::time::Instant;
 use std::u16;
 
-use crate::{Camera, CameraBindGroup, RenderCamera, Vertex};
+use crate::{Camera, CameraBindGroup, Material, RenderCamera, Vertex};
 
-use super::RawMesh;
-use super::{render_context::RenderContext, Renderer};
-use application::log::error;
+use super::{render_context::RenderContext, Mesh, Renderer};
+use application::log::{error, warn};
 use legion::{system, IntoQuery};
 use wgpu::util::RenderEncoder;
+
+struct CustomDepthBuffer(texture::Texture);
+
 
 fn clear_screen(context: &mut RenderContext) {
     context
@@ -63,6 +65,7 @@ pub fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
             return;
         }
     };
+
 
     {
         use std::sync::{Arc, Mutex};
@@ -120,7 +123,7 @@ pub fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
     let time = Instant::now();
 
     let mut num = 0;
-    for mesh in <&RawMesh>::query().iter(world) {
+    for material in <&Material>::query().iter(world) {
         num += 1;
 
         let mut rpass =
@@ -148,19 +151,19 @@ pub fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
                     occlusion_query_set: None,
                 });
 
-        rpass.set_vertex_buffer(0, mesh.vertex_buffer.slice(..));
-        rpass.set_index_buffer(mesh.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-        rpass.set_pipeline(&mesh.pipeline);
+        rpass.set_vertex_buffer(0, material.vertex_buffer.slice(..));
+        rpass.set_vertex_buffer(1, material.instance_buffer.slice(..));
+        rpass.set_index_buffer(material.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+        rpass.set_pipeline(&material.pipeline);
         rpass.set_bind_group(0, &camera_bind_group.0, &[]);
+        rpass.set_bind_group(1, &material.bind_groups, &[]);
 
         rpass.draw_indexed(
-            0..mesh.index_buffer.size() as u32 / std::mem::size_of::<u16>() as u32,
+            0..material.indecies.len() as u32,
             0,
-            0..1,
+            0..material.instances.len() as u32,
         );
     }
-
-    //println!("rendering : {} instances at : {} fps", num, 1.0 / time.elapsed().as_secs_f64());
 
     render_context.execute(&mut renderer.queue);
 }

@@ -28,5 +28,5 @@ pub fn camera_controller(
         movement -= right_v;
     }
 
-    camera.eye += movement * delta.0 as f32;
+    camera.eye += movement * delta.0 as f32 / 100.0;
 }

@@ -1,48 +1,16 @@
 use super::*;
 
-#[derive(Debug)]
-pub struct RawMesh {
-    pub vertex_buffer: wgpu::Buffer,
-    pub index_buffer: wgpu::Buffer,
-    pub pipeline: Arc<wgpu::RenderPipeline>,
-}
-
-impl RawMesh {
-    pub fn new(
-        renderer: &mut Renderer,
-        vertecies: Vec<Vertex>,
-        indecies: Vec<u16>,
-        pipeline: Arc<wgpu::RenderPipeline>,
-    ) -> Self {
-        let vertex_buffer = renderer
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("vertex buffer"),
-                contents: bytemuck::cast_slice(&vertecies),
-                usage: wgpu::BufferUsages::VERTEX,
-            });
-
-        let index_buffer = renderer
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: Some("index buffer"),
-                contents: bytemuck::cast_slice(&indecies),
-                usage: wgpu::BufferUsages::INDEX,
-            });
-
-        Self {
-            pipeline,
-            vertex_buffer,
-            index_buffer,
-        }
-    }
+pub struct Mesh {
+    vertex_buffer: Arc<wgpu::Buffer>,
+    index_buffer: Arc<wgpu::Buffer>,
+    material: Arc<crate::Material>,
 }
 
 #[repr(C)]
 #[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
     pub position: [f32; 3],
-    pub color: [f32; 3],
+    pub uv: [f32; 2],
 }
 
 impl Vertex {
@@ -66,4 +34,3 @@ impl Vertex {
         }
     }
 }
-

@@ -8,3 +8,4 @@ puddle = {path = "../puddle/"}
 legion = "0.4.0"
 cgmath = "0.18.0"
 noise = "0.8.2"
+rand = "0.8.5"

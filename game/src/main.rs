@@ -1,16 +1,15 @@
 mod camera;
 mod cube;
-mod pipeline;
-mod chunk_loading;
+mod mesh_loader;
 
 use puddle::{
     application::Scheddules,
-    rendering::{wgpu, CameraBindGroupLayout, Renderer, Vertex},
-    texture,
+    rendering::{wgpu, Renderer},
 };
 
 use legion::{system, systems::CommandBuffer};
-use std::{sync::Arc, time::Instant};
+use rand::Rng;
+use std::time::Instant;
 
 #[system]
 fn update_cam(
@@ -24,75 +23,75 @@ fn update_cam(
     camera.eye.x = x * 2.0;
 }
 
-#[system]
-fn load_chunk(
-    commands: &mut CommandBuffer,
-    #[resource] renderer: &mut Renderer,
-    #[resource] pipeline: &mut ChunkPipeLine,
-    #[resource] num: &mut CurrentChunk,
-) {
-    let (mut vertecies, indecies) = cube::get_data();
-    let off = num.0 as f32 % 30.0;
-    num.0 += 1;
-
-    let row = (num.0 as f32 / 30.0).floor();
-
-    for vert in vertecies.iter_mut() {
-        vert.position[0] = -vert.position[0] + off * 2.0;
-        vert.position[1] = -vert.position[1];
-        vert.position[2] = -vert.position[2] + row * 2.0;
-    }
-
-    let mesh_data =
-        puddle::rendering::RawMesh::new(renderer, vertecies, indecies, pipeline.0.clone());
-    let chunk = commands.push(());
-    commands.add_component(chunk, mesh_data);
-}
-
-struct ChunkPipeLine(Arc<wgpu::RenderPipeline>);
-
 pub struct DeltaTime(f64);
 struct LastUpdate(Instant);
 
-struct CurrentChunk(u32);
-
-#[system]
-fn reset_deltatime(#[resource] lu: &mut LastUpdate, #[resource] dt: &mut DeltaTime) {
+#[system(for_each)]
+fn reset_deltatime(
+    #[resource] lu: &mut LastUpdate,
+    #[state] val: &mut u64,
+    material: &puddle::rendering::Material,
+) {
     let last_update = lu.0.elapsed().as_secs_f64();
     lu.0 = Instant::now();
-    dt.0 = last_update;
 
-    println!("rendering {} fps", (1.0 / dt.0).floor());
+    *val += 1;
+    if *val % 100 == 0 {
+        println!(
+            "{} fps at {} instances",
+            1.0 / last_update,
+            material.instances.len()
+        );
+    }
 }
 
-use std::thread;
+#[system(for_each)]
+fn load_mesh(
+    material: &mut puddle::rendering::Material,
+    #[resource] input: &puddle::window::InputList,
+) {
+    use puddle::window::winit::keyboard::KeyCode;
+    if input.is_pressed(KeyCode::Space) {
+        return;
+    }
 
+    let data = cube::get_cube();
+
+    let mut rng = rand::thread_rng();
+    let offset_x = rng.gen_range(-20.0..20.0);
+    let offset_y = rng.gen_range(-20.0..20.0);
+    let offset_z = rng.gen_range(-20.0..20.0);
+
+    let mut pos = puddle::rendering::ModelMatrix::default();
+    pos.position.x += offset_x;
+    pos.position.y += offset_y;
+    pos.position.z += offset_z;
+
+    material.add_mesh(data.0, data.1, pos);
+}
 
 fn main() {
     let mut app = puddle::application::Application::new();
 
     app.resources.insert(DeltaTime(0.0));
     app.resources.insert(LastUpdate(Instant::now()));
-    app.resources.insert(CurrentChunk(0));
 
     app.resources.insert(Instant::now());
 
     app.add_plugin(puddle::window::WindowPlugin);
     app.add_plugin(puddle::rendering::RenderPlugin);
 
-    app.scheddules
-        .add_non_parralel(Scheddules::Startup, pipeline::load_pipeline);
+    // add systems
+
+    app.resources.insert(DeltaTime(1.0));
 
     app.scheddules
-        .add(Scheddules::Update, reset_deltatime_system());
+        .add(Scheddules::Update, reset_deltatime_system(0));
     app.scheddules
         .add(Scheddules::Update, camera::camera_controller_system());
     app.scheddules
-        .add(Scheddules::Update, chunk_loading::do_something_system(vec![]));
-
-    app.scheddules.add(Scheddules::Update, load_chunk_system());
-
-    //app.scheddules.add(Scheddules::Update, print_chunk_system());
+        .add(Scheddules::Startup, mesh_loader::load_mesh_system());
+    app.scheddules.add(Scheddules::Update, load_mesh_system());
 
     app.run();
 }

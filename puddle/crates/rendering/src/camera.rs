@@ -1,25 +1,26 @@
 use cgmath::prelude::*;
 use window::winit;
 
-
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct CameraUniform {
     view_proj: [[f32; 4]; 4],
+    camera_eye: [f32; 4],
 }
 
 impl CameraUniform {
     pub fn new() -> Self {
         Self {
             view_proj: cgmath::Matrix4::identity().into(),
+            camera_eye : [0.0, 0.0, 0.0, 1.0],
         }
     }
 
     pub fn update_view_proj(&mut self, camera: &Camera) {
         self.view_proj = camera.build_view_projection_matrix().into();
+        self.camera_eye = [camera.eye.x, camera.eye.y, camera.eye.z, 1.0].into();
     }
 }
-
 
 use cgmath::Vector3;
 use winit::{event::*, keyboard::PhysicalKey};
@@ -49,7 +50,7 @@ impl Camera {
         OPENGL_TO_WGPU_MATRIX * proj * view
     }
 
-    pub fn default(aspect : f32) -> Self {
+    pub fn default(aspect: f32) -> Self {
         Camera {
             eye: (2.0, 1.0, 0.1).into(),
             target: (0.0, 0.0, 0.0).into(),
