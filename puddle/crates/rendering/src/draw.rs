@@ -139,14 +139,15 @@ pub fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
                             store: wgpu::StoreOp::Store,
                         },
                     })],
-                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    depth_stencil_attachment: if material.uses_depth_buffer {
+                        Some(wgpu::RenderPassDepthStencilAttachment {
                         view: &render_context.depth_texture.view,
                         depth_ops: Some(wgpu::Operations {
                             load: wgpu::LoadOp::Load,
                             store: wgpu::StoreOp::Store,
                         }),
                         stencil_ops: None,
-                    }),
+                    }) } else {None},
                     timestamp_writes: None,
                     occlusion_query_set: None,
                 });

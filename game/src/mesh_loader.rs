@@ -47,8 +47,6 @@ pub fn load_mesh(
 
     let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
 
-    let depth_buffer = puddle::texture::Texture::cretate_depth_texture(&renderer.device, &renderer.surface_config);
-
     renderer.queue.write_texture(
         wgpu::ImageCopyTexture {
             aspect: wgpu::TextureAspect::All,
@@ -76,22 +74,18 @@ pub fn load_mesh(
             visibility: wgpu::ShaderStages::FRAGMENT,
             resource: wgpu::BindingResource::TextureView(&view),
         },
-        puddle::rendering::PuddleBindGroupEntry {
-            ty: wgpu::BindingType::Texture {
-                sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                view_dimension: wgpu::TextureViewDimension::D2,
-                multisampled: false,
-            },
-            visibility: wgpu::ShaderStages::FRAGMENT,
-            resource: wgpu::BindingResource::TextureView(&depth_buffer.view),
-        },
     ];
+
+    
+
+
 
     let mut material = puddle::rendering::Material::new(
         renderer,
         entries,
         camera_bind_group,
         wgpu::include_wgsl!("./voxel_shader.wgsl"),
+        false,
     );
 
     let data = cube::get_cube();

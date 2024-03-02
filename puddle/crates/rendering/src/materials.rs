@@ -16,6 +16,7 @@ pub struct Material {
     pub instances : Vec<ModelMatrix>,
 
     device : Arc<wgpu::Device>,
+    pub(crate) uses_depth_buffer : bool,
 }
 
 pub struct PuddleBindGroupEntry<'a> {
@@ -30,6 +31,7 @@ impl Material {
         entries: Vec<PuddleBindGroupEntry>,
         camera_bind_group: &CameraBindGroupLayout,
         shader: wgpu::ShaderModuleDescriptor,
+        uses_depth_buffer : bool,
     ) -> Self {
         let vertex_buffer = renderer
             .device
@@ -92,7 +94,7 @@ impl Material {
                 entries: &entries,
             });
 
-        let pipeline = load_pipeline(renderer, camera_bind_group, shader, &bindgroup_layout);
+        let pipeline = load_pipeline(renderer, camera_bind_group, shader, &bindgroup_layout, uses_depth_buffer);
 
         Self {
             bind_groups: bind_groups.into(),
@@ -104,6 +106,7 @@ impl Material {
             vertecies : vec![],
             indecies : vec![],
             instances : vec![],
+            uses_depth_buffer,
         }
     }
 
@@ -155,6 +158,7 @@ pub fn load_pipeline(
     camera_bind_group: &CameraBindGroupLayout,
     shader: wgpu::ShaderModuleDescriptor,
     bind_group : &wgpu::BindGroupLayout,
+    uses_depth_buffer : bool,
 ) -> wgpu::RenderPipeline {
     let shader = renderer.device.create_shader_module(shader);
 
@@ -206,13 +210,13 @@ pub fn load_pipeline(
                 cull_mode: Some(wgpu::Face::Back),
                 ..Default::default()
             },
-            depth_stencil: Some(wgpu::DepthStencilState {
+            depth_stencil: if uses_depth_buffer {Some(wgpu::DepthStencilState {
                 format: texture::Texture::DEPTH_FORMAT,
                 depth_write_enabled: true,
                 depth_compare: wgpu::CompareFunction::Less,
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
-            }),
+            })} else {None},
 
             multisample: wgpu::MultisampleState::default(),
             multiview: None,
