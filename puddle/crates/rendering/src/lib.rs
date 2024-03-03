@@ -13,6 +13,7 @@ pub use materials::*;
 pub use meshes::*;
 pub use wgpu;
 pub struct RenderPlugin;
+pub use draw::CustomDepthBuffer;
 
 use application::Plugin;
 use std::sync::Arc;
@@ -80,7 +81,10 @@ impl Plugin for RenderPlugin {
         .expect("failed to request adapter");
 
         let (device, queue) = application::async_std::task::block_on(
-            adapter.request_device(&wgpu::DeviceDescriptor::default(), None),
+            adapter.request_device(&wgpu::DeviceDescriptor {
+                required_features : wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES,
+                ..Default::default()
+            }, None),
         )
         .unwrap();
 

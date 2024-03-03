@@ -55,11 +55,34 @@ fn vs_main(
 
 
 @group(1) @binding(0)
-var voxel_data: texture_3d<u32>;
+    var voxel_data: texture_3d<u32>;
+@group(1) @binding(1)
+var depth_texture: texture_storage_2d<r32float, read_write>;
+
+
+fn to_tex_cord(clip_pos : vec2<f32>) -> vec2<i32> {
+    let x = i32((clip_pos.x - 100.0) / 1.0);
+    let y = i32((clip_pos.y - 100.0) / 1.0);
+    return vec2<i32>(x,y);
+}
 
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+    
+    let depth_pos = to_tex_cord(in.clip_position.xy);
+    let loaded = textureLoad(depth_texture, depth_pos).r;
+
+    if ( loaded == 0.0 ) {
+        textureStore(depth_texture, depth_pos, vec4(in.clip_position.z * 2.0)); 
+        return vec4(in.clip_position.xy / vec2(100.0), 0.0, 1.0);
+    }
+
+    if ( loaded > in.clip_position.z ) {
+        return vec4(vec3(loaded), 1.0);
+    }
+
+    textureStore(depth_texture, depth_pos, vec4(in.clip_position.z * 2.0)); 
 
   let model_position = in.model_matrix_3.xyz;
 
@@ -77,9 +100,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
   let start_pos = rayCubeIntersection(cam_pos, dir * vec3(-1.0), min, max) + vec3(0.5);
 
-  let ray_res = RayCast(start_pos, dir);
+  //let ray_res = RayCast(start_pos, dir);
 
-  return ray_res;
+  return vec4(vec3(loaded), 1.0);
 }
 
 

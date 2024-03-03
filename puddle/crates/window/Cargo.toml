@@ -7,3 +7,4 @@ edition = "2021"
 winit = "0.29.10"
 application = { path = "../application" }
 events = { path = "../events" }
+legion = "0.4.0"

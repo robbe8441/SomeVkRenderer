@@ -1,5 +1,5 @@
 use std::{collections::HashMap, time::Instant};
-use crate::input::InputList;
+use crate::input::{InputList, MouseDelta};
 
 use application::Application;
 use winit::{
@@ -51,6 +51,12 @@ pub(crate) fn runner(app: &mut Application) {
                             list.0.insert(physical_key, state.is_pressed());
                         }
                     }
+
+                    if let DeviceEvent::MouseMotion {delta} = event {
+                        if let Some(mut list) = app.resources.get_mut::<InputList>() {
+                            list.1.insert(MouseDelta{x:delta.0 as f32, y:delta.1 as f32});
+                        }
+                    }
                 }
 
                 Event::WindowEvent {
@@ -64,6 +70,9 @@ pub(crate) fn runner(app: &mut Application) {
                 } => {
                     // update the game loop
                     update_schedule.execute(&mut app.world, &mut app.resources);
+                    if let Some(mut list) = app.resources.get_mut::<InputList>() {
+                        list.1.remove::<MouseDelta>();
+                    }
                 }
 
                 Event::WindowEvent {

@@ -1,6 +1,7 @@
 #![allow(unused, dead_code)]
 pub mod event_list;
 mod event_runner;
+use legion::Resources;
 pub use winit;
 mod input;
 pub use input::InputList;
@@ -33,7 +34,7 @@ impl Plugin for WindowPlugin {
         app.resources.insert( EventHandler::<event_list::Resize>::new() );
         app.resources.insert( EventHandler::<event_list::DeviceEvent>::new() );
 
-        app.resources.insert(InputList(HashMap::new()));
+        app.resources.insert(InputList(HashMap::new(), Resources::default()));
 
         app.runner = Some(Box::new(event_runner::runner));
     }

@@ -1,0 +1,11 @@
+[package]
+name = "voxel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+puddle = {path = "../puddle/"}
+legion = "0.4.0"
+bytemuck = "1.14.3"
+cgmath = "0.18.0"
+noise = "0.8.2"

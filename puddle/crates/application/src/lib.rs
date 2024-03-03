@@ -31,6 +31,9 @@ impl Application {
             runner: None,
         };
 
+        app.scheddules.get_or_add(Scheddules::Update);
+        app.scheddules.get_or_add(Scheddules::Startup);
+
         app
     }
 

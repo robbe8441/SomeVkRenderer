@@ -6,12 +6,11 @@ pub fn load_mesh(
     #[resource] renderer: &mut Renderer,
     #[resource] camera_bind_group: &puddle::rendering::CameraBindGroupLayout,
 ) {
-
     use noise::{NoiseFn, SuperSimplex};
     let simplex = SuperSimplex::new(0);
-    let noise_size : f64 = 50.0;
+    let noise_size: f64 = 50.0;
 
-    let size : u32 = 100;
+    let size: u32 = 100;
 
     let mut result = Vec::with_capacity(size.pow(3) as usize);
 
@@ -33,10 +32,14 @@ pub fn load_mesh(
         }
     }
 
-    let tex_size = wgpu::Extent3d { width : size, height: size, depth_or_array_layers: size };
+    let tex_size = wgpu::Extent3d {
+        width: size,
+        height: size,
+        depth_or_array_layers: size,
+    };
     let texture = renderer.device.create_texture(&wgpu::TextureDescriptor {
         label: None,
-        size : tex_size,
+        size: tex_size,
         mip_level_count: 1,
         sample_count: 1,
         dimension: wgpu::TextureDimension::D3,
@@ -60,9 +63,27 @@ pub fn load_mesh(
             bytes_per_row: Some(size),
             rows_per_image: Some(size),
         },
-        tex_size
+        tex_size,
     );
 
+    let depth_texture = renderer.device.create_texture(&wgpu::TextureDescriptor {
+        label: None,
+        size: wgpu::Extent3d {
+            width: tex_size.width,
+            height: tex_size.height,
+            depth_or_array_layers: 1,
+        },
+        mip_level_count: 1,
+        sample_count: 1,
+        dimension: wgpu::TextureDimension::D2,
+        format: wgpu::TextureFormat::R32Float,
+        usage: wgpu::TextureUsages::STORAGE_BINDING
+            | wgpu::TextureUsages::COPY_DST
+            | wgpu::TextureUsages::TEXTURE_BINDING,
+        view_formats: &[wgpu::TextureFormat::R32Float],
+    });
+
+    let depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
 
     let entries = vec![
         puddle::rendering::PuddleBindGroupEntry {
@@ -74,11 +95,16 @@ pub fn load_mesh(
             visibility: wgpu::ShaderStages::FRAGMENT,
             resource: wgpu::BindingResource::TextureView(&view),
         },
+        puddle::rendering::PuddleBindGroupEntry {
+            ty: wgpu::BindingType::StorageTexture {
+                view_dimension: wgpu::TextureViewDimension::D2,
+                format: wgpu::TextureFormat::R32Float,
+                access: wgpu::StorageTextureAccess::ReadWrite,
+            },
+            visibility: wgpu::ShaderStages::FRAGMENT,
+            resource: wgpu::BindingResource::TextureView(&depth_view),
+        },
     ];
-
-    
-
-
 
     let mut material = puddle::rendering::Material::new(
         renderer,
@@ -93,4 +119,5 @@ pub fn load_mesh(
 
     let cube = commands.push(());
     commands.add_component(cube, material);
+    commands.add_component(cube, puddle::rendering::CustomDepthBuffer(depth_texture, depth_view));
 }

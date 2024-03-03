@@ -8,7 +8,7 @@ use application::log::{error, warn};
 use legion::{system, IntoQuery};
 use wgpu::util::RenderEncoder;
 
-struct CustomDepthBuffer(texture::Texture);
+pub struct CustomDepthBuffer(pub wgpu::Texture, pub wgpu::TextureView);
 
 
 fn clear_screen(context: &mut RenderContext) {
@@ -123,6 +123,12 @@ pub fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
     let time = Instant::now();
 
     let mut num = 0;
+
+    for texture in <&CustomDepthBuffer>::query().iter(world) {
+
+    }
+
+
     for material in <&Material>::query().iter(world) {
         num += 1;
 
