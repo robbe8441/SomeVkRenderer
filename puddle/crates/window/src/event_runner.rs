@@ -1,5 +1,4 @@
 use std::{collections::HashMap, time::Instant};
-use crate::input::{InputList, MouseDelta};
 
 use application::Application;
 use winit::{
@@ -7,10 +6,8 @@ use winit::{
     event_loop::EventLoop,
 };
 
-use crate::event_list;
 use crate::PuddleWindow;
 use events::EventHandler;
-
 
 pub(crate) fn runner(app: &mut Application) {
     let event_loop = app
@@ -33,31 +30,16 @@ pub(crate) fn runner(app: &mut Application) {
     startup_schedule.execute(&mut app.world, &mut app.resources);
 
     event_loop
-        .run(move |event, target| {
-            match event {
-                Event::DeviceEvent {
-                    device_id: _,
-                    event,
-                } => {
-                    use winit::event::{DeviceEvent, RawKeyEvent};
-                    use winit::keyboard::PhysicalKey;
-
-                    if let DeviceEvent::Key(RawKeyEvent {
-                        physical_key,
-                        state,
-                    }) = event
-                    {
-                        if let Some(mut list) = app.resources.get_mut::<InputList>() {
-                            list.0.insert(physical_key, state.is_pressed());
-                        }
-                    }
-
-                    if let DeviceEvent::MouseMotion {delta} = event {
-                        if let Some(mut list) = app.resources.get_mut::<InputList>() {
-                            list.1.insert(MouseDelta{x:delta.0 as f32, y:delta.1 as f32});
-                        }
-                    }
+        .run(move |mut event, target| {
+            match app.resources.get::<crate::WindowEventHandler>() {
+                Some(r) => {
+                    r.handler.fire(&mut event);
                 }
+                None => {}
+            };
+
+
+            match event {
 
                 Event::WindowEvent {
                     window_id: _,
@@ -70,22 +52,9 @@ pub(crate) fn runner(app: &mut Application) {
                 } => {
                     // update the game loop
                     update_schedule.execute(&mut app.world, &mut app.resources);
-                    if let Some(mut list) = app.resources.get_mut::<InputList>() {
-                        list.1.remove::<MouseDelta>();
-                    }
-                }
-
-                Event::WindowEvent {
-                    window_id: _,
-                    event: WindowEvent::Resized(size),
-                } => {
-                    if let Some(event) = app.resources.get::<EventHandler<event_list::Resize>>() {
-                        event.fire(&mut event_list::Resize(size));
-                    }
                 }
 
                 Event::AboutToWait => window.request_redraw(),
-
                 _ => {}
             }
         })

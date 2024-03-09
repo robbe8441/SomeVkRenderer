@@ -35,7 +35,7 @@ struct RenderCamera {
 }
 
 struct RenderEvents {
-    resized: Option<window::event_list::Resize>,
+    resized: Option<window::winit::dpi::PhysicalSize<u32>>,
 }
 
 use legion::{system, IntoQuery};
@@ -97,7 +97,7 @@ impl Plugin for RenderPlugin {
             width: size.width,
             height: size.height,
 
-            present_mode: wgpu::PresentMode::AutoNoVsync,
+            present_mode: wgpu::PresentMode::AutoVsync,
             alpha_mode: wgpu::CompositeAlphaMode::Auto,
             view_formats: vec![wgpu::TextureFormat::Bgra8Unorm],
             desired_maximum_frame_latency: 0,
@@ -110,7 +110,13 @@ impl Plugin for RenderPlugin {
             .add_non_parralel(Scheddules::Update, draw::draw);
 
         let render_events = Arc::new(std::sync::Mutex::new(RenderEvents { resized: None }));
-        event_listener::init(&mut app.resources, render_events.clone());
+
+        let hanlder = match app.resources.get_mut::<window::WindowEventHandler>() {
+            Some(mut r) => {
+                event_listener::init(&mut r, render_events.clone());
+            }
+            None => {}
+        };
 
         /// setup camera
         let mut cam = Camera::default(

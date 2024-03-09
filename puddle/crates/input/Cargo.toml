@@ -1,0 +1,10 @@
+[package]
+name = "input"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+application = { path = "../application" }
+events = { path = "../events" }
+window = { path = "../window" }
+legion = "0.4.0"

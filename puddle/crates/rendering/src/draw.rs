@@ -87,8 +87,8 @@ pub fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
         };
 
         if let Some(new_size) = &locked.resized {
-            renderer.surface_config.width = new_size.0.width.max(10);
-            renderer.surface_config.height = new_size.0.height.max(10);
+            renderer.surface_config.width = new_size.width.max(10);
+            renderer.surface_config.height = new_size.height.max(10);
 
             renderer
                 .surface

@@ -1,15 +1,11 @@
 use cgmath::{Vector3, Zero};
-use legion::system;
-use puddle::rendering::Camera;
 use puddle::window::winit::keyboard::KeyCode;
-use puddle::window::InputList;
 
-#[system]
-pub fn camera_controller(
-    #[resource] camera: &mut Camera,
-    #[resource] input: &InputList,
-    #[resource] delta: &crate::DeltaTime,
-) {
+pub fn camera_controller(_world : &mut legion::World, resources : &mut legion::Resources) {
+    let mut camera = resources.get_mut::<puddle::rendering::Camera>().unwrap();
+    let input = resources.get_mut::<puddle::window::InputList>().unwrap();
+    let delta = resources.get_mut::<crate::DeltaTime>().unwrap();
+
     let look_v = camera.eye - camera.target;
     let right_v = look_v.cross(Vector3::unit_y());
 

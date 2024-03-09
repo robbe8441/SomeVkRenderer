@@ -34,50 +34,50 @@ struct Uniforms {
     time : f32,
     width : f32,
     height : f32,
+    mode : i32,
 };
 @group(1) @binding(0)
     var<uniform> uniforms: Uniforms;
     
 @group(1) @binding(1)
     var voxel_data: texture_3d<u32>;
+@group(1) @binding(2)
+    var<storage, read> color_buffer: array<vec4<f32>>;
 
 
 
+fn getVoxel(c : vec3<i32>) -> Voxel {
+        let pos = vec3<i32>(c.x, -c.y, c.z);
+        let val = textureLoad(voxel_data, pos, 0).r;
 
+        var voxel = Voxel();
 
+        //voxel.color = color_buffer[val];
+        voxel.color = vec4(0.0);
 
-fn sdSphere(p : vec3<f32>, d : f32) -> f32 { 
-    return length(p) - d;
-} 
+        if val < 100 { voxel.is_empty = true; voxel.color = vec4(1.0); }
 
-fn sdBox( p : vec3<f32>, b : vec3<f32> ) -> f32 {
-  let d = abs(p) - b;
-  return min(max(d.x ,max(d.y, d.z)),0.0) +
-         length(max(d,vec3(0.0)));
-}
-
-
-fn getVoxel(c : vec3<i32>) -> bool {
-        let val = textureLoad(voxel_data, c, 0).r;
-
-        if sdSphere(vec3<f32>(c) + 0.5 - camera.camera_pos.xyz, 30.0) < 0.0 {
-            return false;
-        }
-
-	return val > 0;
+	return voxel;
 }
 
 struct RaycastResult {
    normal : vec3<f32>,
    position : vec3<f32>,
+   color : vec4<f32>,
    distance : f32,
    hit : bool,
+   stepps : i32,
+}
+
+struct Voxel {
+    is_empty : bool,
+    color : vec4<f32>,
 }
 
 
 fn raycast(origin : vec3<f32>, direction : vec3<f32>) -> RaycastResult  {
 
-    let MAX_RAY_STEPPS : i32 = 1000;
+    let MAX_RAY_STEPPS : i32 = 1500;
 
     var mapPos = vec3<i32>(floor(origin));
     var deltaDist = abs(vec3(length(direction)) / direction);
@@ -90,10 +90,12 @@ fn raycast(origin : vec3<f32>, direction : vec3<f32>) -> RaycastResult  {
     var normal = vec3<f32>(0.0);
     var dis = 0.0;
     var hit = false;
+    var color = vec4(0.5, 1.0, 1.0, 0.0);
 
+    var stepps = 0;
 
     for (var i=0; i<MAX_RAY_STEPPS; i+=1) {
-        if getVoxel(mapPos) {hit = true; break;}
+        stepps += 1;
 
         if (sideDist.x < sideDist.y) {
             if (sideDist.x < sideDist.z) {
@@ -121,6 +123,8 @@ fn raycast(origin : vec3<f32>, direction : vec3<f32>) -> RaycastResult  {
                         dis += dis_step.z;
                 }
             }
+            let voxel = getVoxel(mapPos);
+            if !voxel.is_empty {hit = true; color = voxel.color; break;}
         }
 
         var res = RaycastResult();
@@ -128,6 +132,8 @@ fn raycast(origin : vec3<f32>, direction : vec3<f32>) -> RaycastResult  {
         res.distance = dis;
         res.position = vec3<f32>(mapPos) + normal;
         res.hit = hit;
+        res.color = color;
+        res.stepps = stepps;
 
         return res;
 }
@@ -150,19 +156,30 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
     let rayDir = (vec4(cameraDir + screenPos.x * cameraPlaneU + screenPos.y * cameraPlaneV, 1.0) * camera.view_proj).xyz;
     let rayPos = camera.camera_pos.xyz;
 
-    var color = vec3(0.0);
-    var dis = 0.0;
-
     let RayRes = raycast(rayPos, rayDir);
-    dis = RayRes.distance;
-
 
     if (!RayRes.hit) {
         return vec4(0.0);
     }
 
-    return vec4(vec3(dis / 100.0), 1.0);
-    //return vec4(color, 1.0);
+    let sun_direction = normalize(vec3(cos(uniforms.time / 100.0), -1.0, sin(uniforms.time / 100.0)));
+
+    let ambient_shadow = vec3(dot(sun_direction, normalize(RayRes.normal)) / 8.0);
+
+    
+    switch uniforms.mode {
+        case 1: {
+            return vec4(vec3(f32(RayRes.stepps) / 1000.0), 1.0);
+        }
+        default: {
+            return vec4(
+                RayRes.color.rgb 
+                -ambient_shadow
+                -vec3(pow(RayRes.distance/1000.0, 1.5)),
+                1.0);
+            }
+        }
+
 }
 
 

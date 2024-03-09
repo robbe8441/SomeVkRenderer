@@ -48,13 +48,7 @@ fn reset_deltatime(
 #[system(for_each)]
 fn load_mesh(
     material: &mut puddle::rendering::Material,
-    #[resource] input: &puddle::window::InputList,
 ) {
-    use puddle::window::winit::keyboard::KeyCode;
-    if input.is_pressed(KeyCode::Space) {
-        return;
-    }
-
     let data = cube::get_cube();
 
     let mut rng = rand::thread_rng();
@@ -88,7 +82,7 @@ fn main() {
     app.scheddules
         .add(Scheddules::Update, reset_deltatime_system(0));
     app.scheddules
-        .add(Scheddules::Update, camera::camera_controller_system());
+        .add_non_parralel(Scheddules::Update, camera::camera_controller);
     app.scheddules
         .add(Scheddules::Startup, mesh_loader::load_mesh_system());
     app.scheddules.add(Scheddules::Update, load_mesh_system());

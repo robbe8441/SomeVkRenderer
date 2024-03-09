@@ -9,4 +9,8 @@ rendering = { path = "./crates/rendering" }
 window = { path = "./crates/window" }
 texture = { path = "./crates/texture" }
 events = { path = "./crates/events" }
+input = { path = "./crates/input" }
+
+
+
 legion = "0.4.0"
