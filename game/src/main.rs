@@ -74,6 +74,7 @@ fn main() {
 
     app.add_plugin(puddle::window::WindowPlugin);
     app.add_plugin(puddle::rendering::RenderPlugin);
+    app.add_plugin(puddle::input::InputPlugin);
 
     // add systems
 
@@ -81,8 +82,7 @@ fn main() {
 
     app.scheddules
         .add(Scheddules::Update, reset_deltatime_system(0));
-    app.scheddules
-        .add_non_parralel(Scheddules::Update, camera::camera_controller);
+    app.scheddules.add(Scheddules::Update, camera::camera_controller_system());
     app.scheddules
         .add(Scheddules::Startup, mesh_loader::load_mesh_system());
     app.scheddules.add(Scheddules::Update, load_mesh_system());
