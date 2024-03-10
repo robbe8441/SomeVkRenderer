@@ -1,10 +1,11 @@
 use std::time::Instant;
 
 use legion::{system, systems::CommandBuffer};
-use puddle::rendering::{
+use puddle::{input::{ArcMut, Input}, rendering::{
     wgpu::{self, util::DeviceExt},
     CameraBindGroupLayout, Material, ModelMatrix, PuddleBindGroupEntry, Renderer, Vertex,
-};
+}, window::winit::keyboard::KeyCode};
+use rand::Rng;
 
 #[repr(C)]
 #[derive(Debug, Copy, Clone, bytemuck::Pod, bytemuck::Zeroable)]
@@ -21,18 +22,16 @@ pub struct Chunktexture {
     size: wgpu::Extent3d,
 }
 
-pub const MAP_SIZE: u32 = 200;
+pub const MAP_SIZE: u32 = 100;
 
 fn gen_chunk() -> Vec<u8> {
     let mut data: Vec<u8> = Vec::with_capacity(MAP_SIZE.pow(3) as usize);
 
-    let noise_res: f64 = 100.0;
+    let noise_res: f64 = 20.0;
 
-    let seed = 0;
+    let seed = rand::thread_rng().gen();
 
-    let noise = noise::Worley::new(seed);
-    let noise2 = noise::SuperSimplex::new(seed);
-    let noise3 = noise::Value::new(seed);
+    let noise = noise::Value::new(seed);
     use noise::NoiseFn;
 
     for x in 0..MAP_SIZE {
@@ -43,22 +42,13 @@ fn gen_chunk() -> Vec<u8> {
                     y as f64 / noise_res,
                     z as f64 / noise_res,
                 ];
-                let val = noise3.get(pos) + noise.get(pos) + noise2.get(pos);
+                let val = noise.get(pos);
 
                 if val > 0.0 {
-                    let val2 = noise2.get([x as f64 / 2.0, y as f64 / 2.0, z as f64 / 2.0]);
-                    let val3 = noise3.get([x as f64 / 10.0, y as f64 / 10.0, z as f64 / 10.0]);
-                    if val2 > 0.0 {
-                        data.push(1);
-                    } else if val3 > 0.0 {
-                        data.push(2);
-                    } else {
-                        data.push(3);
-                    }
-
-                    continue;
+                    data.push(1);
+                } else {
+                    data.push(0);
                 }
-                data.push(0);
             }
         }
     }
@@ -75,6 +65,7 @@ pub fn load_chunk(
     #[state] state: &mut i32,
     #[resource] renderer: &mut Renderer,
 ) {
+    
     if *state == 0 {
         let handle = thread::spawn(gen_chunk);
         thread_pool.push(handle);
@@ -104,7 +95,7 @@ pub fn load_chunk(
                 texture.size,
             );
 
-            *state = 2;
+            *state = 0;
         }
     }
 }
@@ -118,10 +109,16 @@ pub fn add_view(
     println!("{}", MAP_SIZE.pow(3) * std::mem::size_of::<u8>() as u32);
 
     let tex_size = wgpu::Extent3d {
-        width: 962,
-        height: 720,
-        depth_or_array_layers: 1,
+        width: MAP_SIZE,
+        height: MAP_SIZE,
+        depth_or_array_layers: MAP_SIZE,
     };
+
+//    let tex_size = wgpu::Extent3d {
+//        width: 962,
+//        height: 720,
+//        depth_or_array_layers: 1,
+//    };
 
     let texture = renderer.device.create_texture(&wgpu::TextureDescriptor {
         label: None,
@@ -246,7 +243,17 @@ pub fn update_uniforms(
     buffer: &UniformBuffer,
     #[state] time: &Instant,
     #[resource] renderer: &mut puddle::rendering::Renderer,
+    #[resource] input : &ArcMut<Input>,
 ) {
+
+    match input.clone().lock() {
+        Ok(r) => {
+            uniform.render_mode = r.key_pressed(KeyCode::Tab) as i32;
+        }
+        Err(_) => {}
+    }
+
+
     uniform.time = time.elapsed().as_secs_f32();
 
     uniform.width = renderer.surface_config.width as f32;

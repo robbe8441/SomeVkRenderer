@@ -52,10 +52,10 @@ fn getVoxel(c : vec3<i32>) -> Voxel {
 
         var voxel = Voxel();
 
-        //voxel.color = color_buffer[val];
-        voxel.color = vec4(0.0);
+        voxel.color = color_buffer[val];
+        //voxel.color = vec4(0.0);
 
-        if val < 100 { voxel.is_empty = true; voxel.color = vec4(1.0); }
+        if val == 0 { voxel.is_empty = true; voxel.color = vec4(1.0); }
 
 	return voxel;
 }

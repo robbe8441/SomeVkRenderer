@@ -39,8 +39,6 @@ pub fn camera_controller(
     let input = input.lock().unwrap();
     let mouse_pos = mouse_pos.lock().unwrap();
 
-    println!("{}", mouse_pos.1);
-
     let x = mouse_pos.1.sin() * mouse_pos.0.cos();
     let y = -mouse_pos.1.cos();
     let z = mouse_pos.1.sin() * mouse_pos.0.sin();

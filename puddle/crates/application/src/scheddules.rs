@@ -40,6 +40,7 @@ impl SchedduleHandler {
         unsafe { sys.as_mut().unwrap().add_system(system) };
     }
 
+
     pub fn add_non_parralel<T>(&mut self, schedule : Scheddules, system : T)
         where T : FnMut(&mut legion::World, &mut legion::Resources) + 'static
     {

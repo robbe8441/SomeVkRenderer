@@ -8,6 +8,7 @@ use std::time::Instant;
 use badapple::bad_apple_system;
 use legion::system;
 use puddle::application::{Application, Scheddules};
+use view::load_chunk_system;
 
 pub struct DeltaTime(f64);
 
@@ -29,25 +30,17 @@ fn main() {
 
     app.resources.insert(DeltaTime(1.0));
 
-    app.scheddules
-        .add(Scheddules::Startup, skybox::add_skybox_system());
+    app.scheddules.add(Scheddules::Startup, skybox::add_skybox_system());
+    app.scheddules.add(Scheddules::Startup, camera::setup_cam_system());
+    app.scheddules.add(Scheddules::Startup, view::add_view_system());
+    app.scheddules.add(Scheddules::Startup, bad_apple_system(Instant::now()));
 
-    app.scheddules
-        .add(Scheddules::Startup, view::add_view_system());
-    app.scheddules.add(
-        Scheddules::Update,
-        view::update_uniforms_system(Instant::now()),
-    );
-    app.scheddules
-        .add(Scheddules::Update, camera::camera_controller_system());
-    app.scheddules
-        .add(Scheddules::Startup, camera::setup_cam_system());
-    app.scheddules
-        .add(Scheddules::Update, update_delta_time_system(Instant::now()));
-    //app.scheddules.add(Scheddules::Update, view::load_chunk_system(vec![], 0));
-
-    app.scheddules
-        .add(Scheddules::Update, bad_apple_system(Instant::now()));
+    app.scheddules.add(Scheddules::Update, camera::camera_controller_system());
+    app.scheddules.add(Scheddules::Update, update_delta_time_system(Instant::now()));
+    app.scheddules.add(Scheddules::Update, view::update_uniforms_system(Instant::now()));
+    //app.scheddules.add(Scheddules::Update, bad_apple_system(Instant::now()));
+    //
+    app.scheddules.add(Scheddules::Update, load_chunk_system(Vec::new(), 0));
 
     app.resources.insert(PlaybackPuased(false));
 
