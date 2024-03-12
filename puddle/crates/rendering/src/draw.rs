@@ -10,7 +10,6 @@ use wgpu::util::RenderEncoder;
 
 pub struct CustomDepthBuffer(pub wgpu::Texture, pub wgpu::TextureView);
 
-
 fn clear_screen(context: &mut RenderContext) {
     context
         .command_encoder
@@ -67,6 +66,7 @@ pub fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
     };
 
 
+    /*
     {
         use std::sync::{Arc, Mutex};
 
@@ -97,6 +97,7 @@ pub fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
             locked.resized = None;
         }
     }
+    */
 
     let mut render_context = match RenderContext::new(
         &renderer.surface,

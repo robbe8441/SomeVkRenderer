@@ -8,8 +8,7 @@ application = { path = "./crates/application" }
 rendering = { path = "./crates/rendering" }
 window = { path = "./crates/window" }
 texture = { path = "./crates/texture" }
-events = { path = "./crates/events" }
-input = { path = "./crates/input" }
+#input = { path = "./crates/input" }
 
 
 

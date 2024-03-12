@@ -39,7 +39,7 @@ fn main() {
     app.scheddules.add(Scheddules::Update, update_delta_time_system(Instant::now()));
     app.scheddules.add(Scheddules::Update, view::update_uniforms_system(Instant::now()));
     //app.scheddules.add(Scheddules::Update, bad_apple_system(Instant::now()));
-    //
+
     app.scheddules.add(Scheddules::Update, load_chunk_system(Vec::new(), 0));
 
     app.resources.insert(PlaybackPuased(false));

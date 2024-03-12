@@ -1,7 +1,6 @@
 #![allow(unused, dead_code)]
 mod draw;
 mod instaincing;
-mod event_listener;
 mod camera;
 mod materials;
 mod meshes;
@@ -34,9 +33,6 @@ struct RenderCamera {
     pub uniform: CameraUniform,
 }
 
-struct RenderEvents {
-    resized: Option<window::winit::dpi::PhysicalSize<u32>>,
-}
 
 use legion::{system, IntoQuery};
 use wgpu::{core::device::queue, util::DeviceExt};
@@ -111,13 +107,6 @@ impl Plugin for RenderPlugin {
 
         let render_events = Arc::new(std::sync::Mutex::new(RenderEvents { resized: None }));
 
-        let hanlder = match app.resources.get_mut::<window::WindowEventHandler>() {
-            Some(mut r) => {
-                event_listener::init(&mut r, render_events.clone());
-            }
-            None => {}
-        };
-
         /// setup camera
         let mut cam = Camera::default(
             surface_config.width as f32 / surface_config.height as f32,
@@ -161,8 +150,7 @@ impl Plugin for RenderPlugin {
         };
 
         app.resources.insert(CameraBindGroup(camera_bind_group));
-        app.resources
-            .insert(CameraBindGroupLayout(Arc::new(camera_bind_group_layout)));
+        app.resources.insert(CameraBindGroupLayout(Arc::new(camera_bind_group_layout)));
         app.resources.insert(cam_buffers);
         app.resources.insert(cam);
         app.resources.insert(render_events);
@@ -176,4 +164,3 @@ impl Plugin for RenderPlugin {
     }
 }
 
-impl Renderer {}

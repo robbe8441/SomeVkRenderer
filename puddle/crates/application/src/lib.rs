@@ -1,22 +1,28 @@
 #![allow(unused, dead_code)]
 use std::ops::Deref;
+use std::sync::{Arc, Mutex};
 
-pub use legion;
 pub use log;
-pub use plugins::{Plugin, PluginHandler};
+pub use geese;
+pub use legion;
 pub use async_std;
+use geese::EventQueue;
 pub use scheddules::Scheddules;
+pub use plugins::{Plugin, PluginHandler};
 
 mod logger;
 mod plugins;
 mod scheddules;
 
+use geese::GeeseContext;
+
 pub struct Application {
     pub world: legion::World,
     pub resources: legion::Resources,
     pub plugins: Option<plugins::PluginHandler>,
-    pub runner: Option<Box<dyn FnOnce(&mut Application)>>,
     pub scheddules : scheddules::SchedduleHandler,
+    pub runner: Option<Box<dyn FnOnce(&mut Application)>>,
+    pub geese_context : GeeseContext,
 }
 
 impl Application {
@@ -24,11 +30,12 @@ impl Application {
         logger::init();
 
         let mut app = Self {
+            runner: None,
+            plugins: None,
             world: legion::World::default(),
             resources: legion::Resources::default(),
             scheddules : scheddules::SchedduleHandler::new(),
-            plugins: None,
-            runner: None,
+            geese_context : GeeseContext::default(),
         };
 
         app.scheddules.get_or_add(Scheddules::Update);
@@ -37,11 +44,17 @@ impl Application {
         app
     }
 
-    pub fn add_plugin(&mut self, plugin: impl Plugin + 'static) {
+    pub fn add_event_listener<T: geese::GeeseSystem>(&mut self) -> &mut Self {
+        self.geese_context.flush().with(geese::notify::add_system::<T>());
+        self
+    }
+
+    pub fn add_plugin(&mut self, plugin: impl Plugin + 'static) -> &mut Self {
         self.plugins
             .get_or_insert_with(|| PluginHandler::new())
             .plugins
             .push(Box::new(plugin));
+        self
     }
 
     pub fn run(mut self) {

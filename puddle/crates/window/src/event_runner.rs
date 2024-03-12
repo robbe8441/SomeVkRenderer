@@ -7,7 +7,6 @@ use winit::{
 };
 
 use crate::PuddleWindow;
-use events::EventHandler;
 
 pub(crate) fn runner(app: &mut Application) {
     let event_loop = app
@@ -31,16 +30,9 @@ pub(crate) fn runner(app: &mut Application) {
 
     event_loop
         .run(move |mut event, target| {
-            match app.resources.get::<crate::WindowEventHandler>() {
-                Some(r) => {
-                    r.handler.fire(&mut event);
-                }
-                None => {}
-            };
-
+            crate::send_events::handle_events(&event, app);
 
             match event {
-
                 Event::WindowEvent {
                     window_id: _,
                     event: WindowEvent::CloseRequested,

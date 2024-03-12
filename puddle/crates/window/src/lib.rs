@@ -1,21 +1,19 @@
 #![allow(unused, dead_code)]
 mod event_runner;
-use legion::Resources;
+mod send_events;
+
 pub use winit;
+pub use send_events::events;
 
 use application::{Application, Plugin};
-use std::{collections::HashMap, sync::Arc};
-
+use legion::Resources;
+use std::sync::Arc;
 use winit::{event_loop::EventLoop, window::Window};
 
 pub struct WindowPlugin;
 
 pub struct PuddleWindow {
     pub window: Arc<Window>,
-}
-
-pub struct WindowEventHandler {
-    pub handler : events::EventHandler<winit::event::Event<()>>
 }
 
 impl Plugin for WindowPlugin {
@@ -27,15 +25,9 @@ impl Plugin for WindowPlugin {
             window: Arc::new(window),
         };
 
-        let event_handler = WindowEventHandler {
-            handler : events::EventHandler::new(),
-        };
-
         app.resources.insert(puddle_window);
         app.resources.insert(event_loop);
-        app.resources.insert(event_handler);
 
-        use events::EventHandler;
         app.runner = Some(Box::new(event_runner::runner));
     }
 }
