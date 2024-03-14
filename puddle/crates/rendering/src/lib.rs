@@ -105,8 +105,6 @@ impl Plugin for RenderPlugin {
         app.scheddules
             .add_non_parralel(Scheddules::Update, draw::draw);
 
-        let render_events = Arc::new(std::sync::Mutex::new(RenderEvents { resized: None }));
-
         /// setup camera
         let mut cam = Camera::default(
             surface_config.width as f32 / surface_config.height as f32,
@@ -153,7 +151,6 @@ impl Plugin for RenderPlugin {
         app.resources.insert(CameraBindGroupLayout(Arc::new(camera_bind_group_layout)));
         app.resources.insert(cam_buffers);
         app.resources.insert(cam);
-        app.resources.insert(render_events);
         app.resources.insert(Renderer {
             surface,
             device : device.into(),
