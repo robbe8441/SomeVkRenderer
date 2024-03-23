@@ -5,11 +5,7 @@ edition = "2021"
 
 [dependencies]
 application = { path = "./crates/application" }
-rendering = { path = "./crates/rendering" }
 window = { path = "./crates/window" }
-texture = { path = "./crates/texture" }
-#input = { path = "./crates/input" }
-
-
-
+rendering = { path = "./crates/rendering" }
+asset_manager = { path = "./crates/asset_manager" }
 legion = "0.4.0"

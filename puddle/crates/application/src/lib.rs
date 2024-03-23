@@ -2,13 +2,13 @@
 use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 
-pub use log;
-pub use geese;
-pub use legion;
 pub use async_std;
+pub use geese;
 use geese::EventQueue;
-pub use scheddules::Scheddules;
+pub use legion;
+pub use log;
 pub use plugins::{Plugin, PluginHandler};
+pub use scheddules::Scheddules;
 
 mod logger;
 mod plugins;
@@ -20,9 +20,9 @@ pub struct Application {
     pub world: legion::World,
     pub resources: legion::Resources,
     pub plugins: Option<plugins::PluginHandler>,
-    pub scheddules : scheddules::SchedduleHandler,
+    pub scheddules: scheddules::SchedduleHandler,
     pub runner: Option<Box<dyn FnOnce(&mut Application)>>,
-    pub geese_context : GeeseContext,
+    pub geese_context: GeeseContext,
 }
 
 impl Application {
@@ -34,18 +34,36 @@ impl Application {
             plugins: None,
             world: legion::World::default(),
             resources: legion::Resources::default(),
-            scheddules : scheddules::SchedduleHandler::new(),
-            geese_context : GeeseContext::default(),
+            scheddules: scheddules::SchedduleHandler::new(),
+            geese_context: GeeseContext::default(),
         };
 
         app.scheddules.get_or_add(Scheddules::Update);
         app.scheddules.get_or_add(Scheddules::Startup);
 
+        app.runner = Some(Box::new(|app| {
+            let mut update_schedule = app
+                .scheddules
+                .remove(Scheddules::Update)
+                .unwrap()
+                .build();
+            let mut startup_schedule = app
+                .scheddules
+                .remove(Scheddules::Startup)
+                .unwrap()
+                .build();
+
+            startup_schedule.execute(&mut app.world, &mut app.resources);
+            update_schedule.execute(&mut app.world, &mut app.resources);
+        }));
+
         app
     }
 
     pub fn add_event_listener<T: geese::GeeseSystem>(&mut self) -> &mut Self {
-        self.geese_context.flush().with(geese::notify::add_system::<T>());
+        self.geese_context
+            .flush()
+            .with(geese::notify::add_system::<T>());
         self
     }
 

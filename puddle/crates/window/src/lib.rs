@@ -19,7 +19,10 @@ pub struct PuddleWindow {
 impl Plugin for WindowPlugin {
     fn build(&mut self, app: &mut Application) {
         let event_loop = EventLoop::new().unwrap();
-        let window = Window::new(&event_loop).unwrap();
+
+        let window = winit::window::WindowBuilder::new()
+            .build(&event_loop)
+            .unwrap();
 
         let puddle_window = PuddleWindow {
             window: Arc::new(window),
