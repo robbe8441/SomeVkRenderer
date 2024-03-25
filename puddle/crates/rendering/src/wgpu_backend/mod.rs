@@ -1,85 +1,64 @@
+mod plugin;
+mod render_context;
+
+use super::{RenderBackend, RenderPlugin};
+use crate::{BufferType, RenderContext, RenderPass};
+
+use application::log::warn;
 use legion::{system, IntoQuery};
 use wgpu::{core::device::queue, util::DeviceExt};
-use super::{RenderPlugin, RenderBackend, Renderer};
 
 pub struct WebGpu;
 impl RenderBackend for WebGpu {}
 
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 
+struct WgpuRenderer {
+    pub device: Arc<wgpu::Device>,
+    pub queue: wgpu::Queue,
+    pub surface: wgpu::Surface<'static>,
+    pub surface_config: wgpu::SurfaceConfiguration,
+    pub adapter: wgpu::Adapter,
+}
 
-impl application::Plugin for RenderPlugin<WebGpu> {
-    fn finish(&mut self, app: &mut application::Application) {
+impl crate::Renderer for WgpuRenderer {
+    /*
+    fn begin_render(&mut self) -> Option<Box< dyn RenderContext<Self> >>
+    where
+        Self: Sized,
+    {
+        render_context::WgpuRenderContext::begin(self)
+    }
+    */
 
-        let window = app
-            .resources
-            .get::<window::PuddleWindow>()
-            .expect("failed to load window")
-            .window
-            .clone();
+    fn create_buffer(&mut self, ty: &BufferType) -> crate::Buffer {
+        use bytemuck::cast_slice;
 
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::PRIMARY,
-            ..Default::default()
-        });
-
-        let window = app
-            .resources
-            .get_mut::<window::PuddleWindow>()
-            .expect("first setup window")
-            .window
-            .clone();
-
-        let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-            backends: wgpu::Backends::PRIMARY,
-            ..Default::default()
-        });
-
-        let surface = instance
-            .create_surface(window.clone())
-            .expect("failed to create surface");
-
-        let adapter = application::async_std::task::block_on(instance.request_adapter(
-            &wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::HighPerformance,
-                compatible_surface: Some(&surface),
-                force_fallback_adapter: false,
-            },
-        ))
-        .expect("failed to request adapter");
-
-        let (device, queue) = application::async_std::task::block_on(
-            adapter.request_device(&wgpu::DeviceDescriptor {
-                required_features : wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES,
-                ..Default::default()
-            }, None),
-        )
-        .unwrap();
-
-        let size = window.inner_size();
-
-        let surface_config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
-            format: wgpu::TextureFormat::Bgra8UnormSrgb,
-
-            width: size.width,
-            height: size.height,
-
-            present_mode: wgpu::PresentMode::AutoVsync,
-            alpha_mode: wgpu::CompositeAlphaMode::Auto,
-            view_formats: vec![wgpu::TextureFormat::Bgra8Unorm],
-            desired_maximum_frame_latency: 0,
+        let (usage, contents) = match ty {
+            BufferType::Index(v) => (wgpu::BufferUsages::INDEX, cast_slice(v)),
+            BufferType::Vertex(v) => (wgpu::BufferUsages::VERTEX, cast_slice(v)),
+            BufferType::Uniform(v) => (wgpu::BufferUsages::UNIFORM, cast_slice(v)),
         };
 
-        surface.configure(&device, &surface_config);
+        let buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents,
+                usage,
+            });
 
-        app.resources.insert(Renderer {
-            surface,
-            device : device.into(),
-            queue,
-            surface_config,
-            adapter,
-        });
+        crate::Buffer {
+            buffer,
+            ty: ty.clone(),
+        }
     }
 
+    fn queue(&mut self) -> &mut wgpu::Queue {
+        &mut self.queue
+    }
+
+    fn write_buffer(&mut self, buffer: crate::Buffer, data: &[u8]) {
+        self.queue.write_buffer(&buffer.buffer, 0, data);
+    }
 }
