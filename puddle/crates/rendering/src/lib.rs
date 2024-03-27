@@ -2,6 +2,7 @@
 
 mod backend;
 mod frontend;
+mod types;
 
 pub struct RenderPlugin;
 
@@ -12,5 +13,7 @@ impl application::Plugin for RenderPlugin {
         app.resources.insert(backend);
         app.scheddules
             .add_non_parralel(application::Scheddules::Update, frontend::test::init);
+        app.scheddules
+            .add_non_parralel(application::Scheddules::Startup, frontend::test::srtup);
     }
 }

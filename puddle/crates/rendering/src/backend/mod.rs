@@ -1,6 +1,7 @@
 mod buffers;
 mod render_context;
 mod setup;
+mod pipeline;
 pub use buffers::Buffer;
 
 use bytemuck::checked::cast_slice;
@@ -20,6 +21,8 @@ pub(crate) struct Renderer {
     pub surface_config: wgpu::SurfaceConfiguration,
     pub adapter: wgpu::Adapter,
 }
+
+
 
 impl Renderer {
     pub(crate) fn new(app: &mut application::Application) -> Self {
@@ -60,7 +63,7 @@ impl Renderer {
         self.queue.write_buffer(&buffer.buffer, 0, data);
     }
 
-    fn create_buffer<T>(&mut self, usage: wgpu::BufferUsages, contents: &Vec<T>) -> Buffer
+    pub fn create_buffer<T>(&mut self, usage: wgpu::BufferUsages, contents: &Vec<T>) -> Buffer
     where
         T: bytemuck::Pod,
     {
@@ -74,6 +77,10 @@ impl Renderer {
                 usage,
             });
 
-        Buffer { buffer }
+        Buffer {
+            buffer,
+            lengh: contents.len(),
+        }
     }
+
 }

@@ -1,14 +1,16 @@
 pub mod test;
 use crate::backend::Buffer;
 
-pub(crate) enum RenderPass {
+use std::sync::Arc;
+
+pub(crate) enum RenderPass<'a> {
     ClearColor {
         color: [f64; 4],
     },
 
     DrawIndexed {
-        vertex_buffer: Buffer,
-        index_buffer: Buffer,
-        pipeline: wgpu::RenderPipeline,
+        vertex_buffer: &'a Buffer,
+        index_buffer: &'a Buffer,
+        pipeline: &'a wgpu::RenderPipeline,
     },
 }

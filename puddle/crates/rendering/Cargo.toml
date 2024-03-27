@@ -8,4 +8,4 @@ application = { path = "../application" }
 window = { path = "../window" }
 legion = "0.4.0"
 wgpu = "0.19.3"
-bytemuck = "1.15.0"
+bytemuck = {version = "1.15.0", features = ["derive"]}
