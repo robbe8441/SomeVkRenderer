@@ -1,46 +1,18 @@
 use application::log::warn;
 
-use super::WgpuRenderer;
-use crate::{RenderPass, WebGpu};
+use super::Renderer;
+use crate::frontend::RenderPass;
 use std::sync::Arc;
 
-pub(crate) struct WgpuRenderContext {
+pub struct RenderContext {
     pub view: Arc<wgpu::TextureView>,
     pub frame: wgpu::SurfaceTexture,
     pub command_encoder: wgpu::CommandEncoder,
 }
 
-impl crate::RenderContext<WgpuRenderer> for WgpuRenderContext {
-    // create a new rendercontext
-    fn begin(renderer: &mut WgpuRenderer) -> Option<Box<Self>> {
-        let command_encoder =
-            renderer
-                .device
-                .create_command_encoder(&wgpu::CommandEncoderDescriptor {
-                    label: Some("Wgpu Command Encoder"),
-                });
-
-        let frame = match renderer.surface.get_current_texture() {
-            Ok(r) => r,
-            Err(e) => {
-                warn!("dropped frame {}", e);
-                return None;
-            }
-        };
-
-        let view = frame
-            .texture
-            .create_view(&wgpu::TextureViewDescriptor::default());
-
-        Some(Box::new(WgpuRenderContext {
-            view: Arc::new(view),
-            frame,
-            command_encoder,
-        }))
-    }
-
+impl RenderContext {
     // add a new command
-    fn add_renderpass(&mut self, rpass: RenderPass) {
+    pub fn add_renderpass(&mut self, rpass: RenderPass) {
         let color_attachments = if let RenderPass::ClearColor { color } = rpass {
             let color = wgpu::Color {
                 r: color[0],
@@ -72,7 +44,7 @@ impl crate::RenderContext<WgpuRenderer> for WgpuRenderContext {
     }
 
     // execute and present the frame
-    fn flush(self, renderer: &mut WgpuRenderer) {
+    pub fn flush(self, renderer: &mut Renderer) {
         let buffer = self.command_encoder.finish();
         renderer.queue.submit([buffer]);
         self.frame.present();
