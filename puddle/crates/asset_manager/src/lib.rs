@@ -2,9 +2,11 @@
 
 mod material;
 mod model;
+mod hot_reload;
 
 pub use material::Material;
 pub use model::{Model, ModelBuilder};
+pub use hot_reload::HotReloading;
 use rendering::Renderer;
 
 use std::str::FromStr;
@@ -16,8 +18,12 @@ pub struct AssetManagerPlugin;
 
 impl application::Plugin for AssetManagerPlugin {
     fn finish(&mut self, app: &mut application::Application) {
+        hot_reload::init(app);
+
+        use application::Scheddules;
+
         app.scheddules
-            .add_non_parralel(application::Scheddules::Update, |world, resources| {
+            .add_non_parralel(Scheddules::Update, |world, resources| {
                 let mut renderer = match resources.get_mut::<Renderer>() {
                     Some(r) => r,
                     None => {

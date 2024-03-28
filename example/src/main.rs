@@ -28,6 +28,7 @@ fn load_model(
 
     let entt = commands.push(());
     commands.add_component(entt, model);
+    commands.add_component(entt, puddle::asset_manager::HotReloading::new("src/TestModel.obj".to_string()));
 }
 
 #[system]
@@ -50,12 +51,13 @@ fn main() {
     app.add_plugin(RenderPlugin);
     app.add_plugin(asset_manager::AssetManagerPlugin);
 
+    app.scheddules
+        .add(puddle::application::Scheddules::Startup, setup_system());
+
     app.scheddules.add(
         puddle::application::Scheddules::Update,
         load_model_system(0, Instant::now()),
     );
-    app.scheddules
-        .add(puddle::application::Scheddules::Startup, setup_system());
 
     app.run();
 }

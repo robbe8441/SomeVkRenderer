@@ -2,7 +2,7 @@ use crate::material::Material;
 use application::log::error;
 use rendering::Buffer;
 
-use std::sync::Arc;
+use std::{io::Read, sync::Arc};
 
 pub struct Model {
     pub vertex_buffer: Buffer,
@@ -18,7 +18,6 @@ pub struct ModelBuilder {
 
 impl ModelBuilder {
     pub fn build(self, renderer: &rendering::Renderer, material: Arc<Material>) -> Model {
-
         use rendering::wgpu::BufferUsages;
         let vertex_buffer = renderer.create_buffer(BufferUsages::VERTEX, &self.vertecies);
         let index_buffer = renderer.create_buffer(BufferUsages::INDEX, &self.indecies);

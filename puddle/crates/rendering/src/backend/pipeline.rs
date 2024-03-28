@@ -11,22 +11,37 @@ pub enum CullMode {
     None,
 }
 
-
-
 pub struct RenderPipelineDesc {
+    /// the shader used to draw the model
+    /// right now this only supports one Shader
     pub shader: wgpu::ShaderModuleDescriptor<'static>,
-    pub buffers: Vec<wgpu::VertexBufferLayout<'static>>,
-    pub bind_group_layouts : Vec<&'static wgpu::BindGroupLayout>,
-    pub allow_transparency: bool,
-    pub cull_mode : CullMode,
-}
 
+    /// The formats of the vertex buffers
+    /// default is just the Vertex layout, can be expanded to be used for instancing
+    pub vertex_buffer_layouts: Vec<wgpu::VertexBufferLayout<'static>>,
+
+    /// the bind group layouts,
+    /// used for textures, uniform buffers, and other buffers to be used in the shader
+    pub bind_group_layouts: Vec<&'static wgpu::BindGroupLayout>,
+
+    /// allows transparency,
+    /// Warning : this disables the early Deph Test, what makes rendering slower,
+    pub allow_transparency: bool,
+
+    /// tells how to handle triangles,
+    /// default is Ccw (counter clock wise)
+    /// meaning the back face of the triangle isnt being rendered what makes rendering faster,
+    /// in some cases you want the faces to be inverted
+    /// or no culling at all
+    pub cull_mode: CullMode,
+}
 
 impl Default for RenderPipelineDesc {
     fn default() -> Self {
         Self {
+            // TODO : write better default shader, this one is trash
             shader: include_wgsl!("./shader.wgsl"),
-            buffers: vec![Vertex::desc()],
+            vertex_buffer_layouts: vec![Vertex::desc()],
             allow_transparency: false,
             cull_mode: CullMode::Ccw,
             bind_group_layouts: vec![],
@@ -35,14 +50,12 @@ impl Default for RenderPipelineDesc {
 }
 
 impl super::Renderer {
+    /// creates a new render_pipeline based on the description you pass in
     pub fn create_render_pipeline(&mut self, desc: &RenderPipelineDesc) -> wgpu::RenderPipeline {
-
         let swapchain_capabilities = self.surface.get_capabilities(&self.adapter);
         let swapchain_format = swapchain_capabilities.formats[0];
 
-        let shader = self
-            .device
-            .create_shader_module(desc.shader.clone());
+        let shader = self.device.create_shader_module(desc.shader.clone());
 
         let blend = if desc.allow_transparency {
             Some(wgpu::BlendState {
@@ -57,9 +70,9 @@ impl super::Renderer {
             None
         };
 
-
         use wgpu::{Face, FrontFace};
-        let culling : (FrontFace, Option<Face>) = match desc.cull_mode {
+
+        let culling: (FrontFace, Option<Face>) = match desc.cull_mode {
             CullMode::Cw => (FrontFace::Cw, Some(Face::Back)),
             CullMode::Ccw => (FrontFace::Ccw, Some(Face::Back)),
             CullMode::None => (FrontFace::Ccw, None),
@@ -82,7 +95,7 @@ impl super::Renderer {
                 vertex: wgpu::VertexState {
                     module: &shader,
                     entry_point: "vs_main",
-                    buffers: &desc.buffers,
+                    buffers: &desc.vertex_buffer_layouts,
                 },
 
                 fragment: Some(wgpu::FragmentState {
@@ -101,6 +114,7 @@ impl super::Renderer {
                     ..Default::default()
                 },
 
+                // TODO : Add depth buffer
                 depth_stencil: None,
                 multisample: wgpu::MultisampleState::default(),
                 multiview: None,

@@ -1,11 +1,11 @@
+mod bind_groups;
 mod buffers;
+mod pipeline;
 mod render_context;
 mod setup;
-mod pipeline;
+
 pub use buffers::Buffer;
 pub use pipeline::RenderPipelineDesc;
-
-use bytemuck::checked::cast_slice;
 pub use render_context::RenderContext;
 
 use application::log::warn;
@@ -13,8 +13,12 @@ use legion::{system, IntoQuery};
 use std::{sync::Arc, time::Instant};
 use wgpu::{core::device::queue, util::DeviceExt};
 
-pub struct WebGpu;
+use bytemuck::cast_slice;
 
+
+
+
+/// the main renderer
 pub struct Renderer {
     pub device: Arc<wgpu::Device>,
     pub queue: wgpu::Queue,
@@ -23,13 +27,23 @@ pub struct Renderer {
     pub adapter: wgpu::Adapter,
 }
 
-
-
 impl Renderer {
+    /// creates a new wgpu renderer and stores it as resource inside the app
     pub(crate) fn new(app: &mut application::Application) -> Self {
         setup::init(app)
     }
 
+    /// crates a new render_context
+    /// a single use container to draw a frame
+    /// example
+    /// ```
+    ///  let render_context = renderer.create_render_context().unwrap();
+    ///
+    ///  render_context.add_renderpass(RenderPass::ClearColor { color : [0.0, 0.0, 0.0, 0.0] });
+    ///     
+    ///  render_context.flush(renderer);
+    ///
+    ///````
     pub fn create_render_context(&mut self) -> Option<RenderContext> {
         let command_encoder = self
             .device
@@ -56,23 +70,29 @@ impl Renderer {
         })
     }
 
-    fn queue(&mut self) -> &mut wgpu::Queue {
-        &mut self.queue
+    /// updates the data on the buffer
+    /// replaces it with a new buffer if the lengh doesnt match
+    fn update_buffer<T: bytemuck::Pod>(&mut self, buffer: &mut Buffer, data: &Vec<T>) {
+        // check if the currently loaded buffer is the same lengh
+        // as wgpu doesnt allow resizing buffers,
+        // so we need to create a new buffer
+        if data.len() == data.len() {
+            self.queue.write_buffer(&buffer.buffer, 0, cast_slice(data));
+        } else {
+            *buffer = self.create_buffer(buffer.buffer.usage(), data);
+        }
     }
 
-    fn write_buffer(&mut self, buffer: Buffer, data: &[u8]) {
-        self.queue.write_buffer(&buffer.buffer, 0, data);
-    }
-
-    pub fn create_buffer<T>(&self, usage: wgpu::BufferUsages, contents: &Vec<T>) -> Buffer
-    where
-        T: bytemuck::Pod,
-    {
-        use bytemuck::cast_slice;
-
-        let buffer = self
-            .device
-            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+    /// crates a new buffer used to store data on the gpu like veretcies
+    /// usage tells wgpu what the buffer is used for
+    /// "contents" is the data thats loaded on to the buffer / gpu
+    #[rustfmt::skip]
+    pub fn create_buffer<T: bytemuck::Pod>(
+        &self,
+        usage: wgpu::BufferUsages,
+        contents: &Vec<T>,
+    ) -> Buffer {
+        let buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: cast_slice(contents),
                 usage,
@@ -83,5 +103,4 @@ impl Renderer {
             lengh: contents.len(),
         }
     }
-
 }
