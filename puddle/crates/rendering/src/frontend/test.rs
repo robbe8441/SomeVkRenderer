@@ -33,11 +33,9 @@ pub fn init(world: &mut legion::World, resources: &mut legion::Resources) {
         None => return,
     };
 
-
     contex.add_renderpass(RenderPass::ClearColor {
         color: [1.0, 1.0, 0.0, 0.0],
     });
-
     
     contex.add_renderpass(RenderPass::DrawIndexed {
         vertex_buffer: &vertex_buffer.0,
@@ -45,10 +43,10 @@ pub fn init(world: &mut legion::World, resources: &mut legion::Resources) {
         pipeline: &pipeline.0,
     });
 
-
-
     contex.flush(&mut renderer);
 }
+
+
 
 pub fn srtup(world: &mut legion::World, resources: &mut legion::Resources) {
     let mut renderer = match resources.get_mut::<Renderer>() {
@@ -72,7 +70,7 @@ pub fn srtup(world: &mut legion::World, resources: &mut legion::Resources) {
         },
     ]);
     let index_buffer = renderer.create_buffer(wgpu::BufferUsages::INDEX, &vec![0_u16,1,2]);
-    let pipeline = renderer.create_render_pipeline();
+    let pipeline = renderer.create_render_pipeline(&crate::backend::RenderPipelineDesc::default());
 
     drop(renderer);
 

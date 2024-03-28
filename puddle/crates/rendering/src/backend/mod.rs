@@ -3,6 +3,7 @@ mod render_context;
 mod setup;
 mod pipeline;
 pub use buffers::Buffer;
+pub use pipeline::RenderPipelineDesc;
 
 use bytemuck::checked::cast_slice;
 pub use render_context::RenderContext;

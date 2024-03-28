@@ -7,3 +7,5 @@ edition = "2021"
 application = { path = "../application" }
 window = { path = "../window" }
 rendering = { path = "../rendering" }
+
+regex = "1.10.4"
