@@ -15,7 +15,7 @@ use wgpu::{core::device::queue, util::DeviceExt};
 
 pub struct WebGpu;
 
-pub(crate) struct Renderer {
+pub struct Renderer {
     pub device: Arc<wgpu::Device>,
     pub queue: wgpu::Queue,
     pub surface: wgpu::Surface<'static>,
@@ -30,7 +30,7 @@ impl Renderer {
         setup::init(app)
     }
 
-    pub(crate) fn create_render_context(&mut self) -> Option<RenderContext> {
+    pub fn create_render_context(&mut self) -> Option<RenderContext> {
         let command_encoder = self
             .device
             .create_command_encoder(&wgpu::CommandEncoderDescriptor {
@@ -64,7 +64,7 @@ impl Renderer {
         self.queue.write_buffer(&buffer.buffer, 0, data);
     }
 
-    pub fn create_buffer<T>(&mut self, usage: wgpu::BufferUsages, contents: &Vec<T>) -> Buffer
+    pub fn create_buffer<T>(&self, usage: wgpu::BufferUsages, contents: &Vec<T>) -> Buffer
     where
         T: bytemuck::Pod,
     {

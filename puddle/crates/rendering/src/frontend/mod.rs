@@ -3,7 +3,7 @@ use crate::backend::Buffer;
 
 use std::sync::Arc;
 
-pub(crate) enum RenderPass<'a> {
+pub enum RenderPass<'a> {
     ClearColor {
         color: [f64; 4],
     },

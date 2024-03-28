@@ -63,6 +63,6 @@ impl RenderContext {
         rpass.set_pipeline(&pipeline);
         rpass.set_vertex_buffer(0, vertex_buffer.buffer.slice(..));
         rpass.set_index_buffer(index_buffer.buffer.slice(..), wgpu::IndexFormat::Uint16);
-        rpass.draw_indexed(0..vertex_buffer.lengh as u32, 0, 0..1);
+        rpass.draw_indexed(0..index_buffer.lengh as u32, 0, 0..1);
     }
 }

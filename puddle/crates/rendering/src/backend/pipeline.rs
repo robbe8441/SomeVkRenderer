@@ -14,11 +14,11 @@ pub enum CullMode {
 
 
 pub struct RenderPipelineDesc {
-    shader: wgpu::ShaderModuleDescriptor<'static>,
-    buffers: Vec<wgpu::VertexBufferLayout<'static>>,
-    bind_group_layouts : Vec<&'static wgpu::BindGroupLayout>,
-    allow_transparency: bool,
-    cull_mode : CullMode,
+    pub shader: wgpu::ShaderModuleDescriptor<'static>,
+    pub buffers: Vec<wgpu::VertexBufferLayout<'static>>,
+    pub bind_group_layouts : Vec<&'static wgpu::BindGroupLayout>,
+    pub allow_transparency: bool,
+    pub cull_mode : CullMode,
 }
 
 
@@ -42,7 +42,7 @@ impl super::Renderer {
 
         let shader = self
             .device
-            .create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+            .create_shader_module(desc.shader.clone());
 
         let blend = if desc.allow_transparency {
             Some(wgpu::BlendState {
