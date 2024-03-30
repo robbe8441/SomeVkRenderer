@@ -66,7 +66,8 @@ pub fn load_model(path: &Path) -> ModelBuilder {
     let file = fs::OpenOptions::new()
         .read(true)
         .open(path)
-        .and_then(|mut file| file.read_to_string(&mut string));
+        .and_then(|mut file| file.read_to_string(&mut string))
+        .inspect_err(|e| error!("failed to load model {}",e));
 
     let mut model = model_from_string(&string);
     model.file_path = path.to_str().map(|r| r.to_string());
