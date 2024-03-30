@@ -1,63 +1,75 @@
-use legion::systems::CommandBuffer;
-use puddle::asset_manager::import_model;
-use puddle::rendering::RenderPlugin;
-use puddle::*;
-
 use legion::system;
+use legion::systems::CommandBuffer;
+use puddle::application::Scheddules;
+use puddle::*;
+use std::path::Path;
+
 use std::sync::Arc;
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
-struct TestMaterial(Arc<puddle::asset_manager::Material>);
-
-#[system(for_each)]
-fn load_model(
-    #[resource] renderer: &puddle::rendering::Renderer,
-    #[state] count: &mut i32,
-    #[state] last_update: &mut Instant,
-    material: &TestMaterial,
+#[rustfmt::skip]
+#[system]
+fn setup(
+    #[resource] renderer: &rendering::Renderer,
+    #[resource] camera: &asset_manager::camera::Camera,
+    #[state] spawned : &mut bool,
     commands: &mut CommandBuffer,
 ) {
-    *count += 1;
+    if *spawned {
+        return;
+    }
 
-    let delta = last_update.elapsed().as_secs_f64();
-    *last_update = Instant::now();
-
-    println!("fps {}, at {}", 1.0 / delta, count);
-
-    let model = import_model!("./TestModel.obj").build(renderer, material.0.clone());
-
-    let entt = commands.push(());
-    commands.add_component(entt, model);
-    commands.add_component(entt, puddle::asset_manager::HotReloading::new("src/TestModel.obj".to_string()));
-}
-
-#[system]
-fn setup(#[resource] renderer: &mut puddle::rendering::Renderer, commands: &mut CommandBuffer) {
+    *spawned = true;
     let pipeline = renderer.create_render_pipeline(&rendering::RenderPipelineDesc {
-        shader: puddle::rendering::wgpu::include_wgsl!("./shader.wgsl"),
+        shader: rendering::wgpu::include_wgsl!("./shader.wgsl"),
+        cull_mode: rendering::CullMode::Ccw,
+        bind_group_layouts: vec![&camera.bind_group_layout],
         ..Default::default()
     });
 
-    let mat = puddle::asset_manager::Material { pipeline };
+    let material = Arc::new(puddle::asset_manager::Material { pipeline });
+
+    let loader = asset_manager::load_model(&Path::new("Assets/TestModel.obj"));
+    let reload = loader.get_hot_reload().unwrap();
+
+    let model = loader.build(renderer, material.clone());
 
     let entt = commands.push(());
-
-    commands.add_component(entt, TestMaterial(Arc::new(mat)));
+    commands.add_component(entt, model);
+    commands.add_component(entt, reload);
 }
 
+
+#[system]
+fn update_cam(
+    #[resource] renderer: &rendering::Renderer,
+    #[resource] camera: &mut puddle::asset_manager::camera::Camera,
+    #[state] time : &Instant
+    ) {
+
+    const R : f32 = 1.5;
+    let t = time.elapsed().as_secs_f32();
+    let x = t.cos() * R;
+    let y = t.sin() * R;
+
+    camera.data.eye.x = x;
+    camera.data.eye.z = y;
+
+    camera.camera_uniform.view_proj = camera.data.build_view_projection_matrix().into();
+    renderer.update_buffer(&mut camera.uniform_buffer, &[camera.camera_uniform]);
+}
+
+
+
 fn main() {
-    let mut app = Application::new();
+    let mut app = puddle::application::Application::new();
+
     app.add_plugin(window::WindowPlugin);
-    app.add_plugin(RenderPlugin);
+    app.add_plugin(rendering::RenderPlugin);
     app.add_plugin(asset_manager::AssetManagerPlugin);
 
-    app.scheddules
-        .add(puddle::application::Scheddules::Startup, setup_system());
-
-    app.scheddules.add(
-        puddle::application::Scheddules::Update,
-        load_model_system(0, Instant::now()),
-    );
+    app.scheddules.add(Scheddules::Update, setup_system(false));
+    app.scheddules.add(Scheddules::Update, update_cam_system(Instant::now()));
 
     app.run();
 }
