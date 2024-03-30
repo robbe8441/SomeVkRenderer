@@ -5,7 +5,7 @@ use puddle::*;
 use std::path::Path;
 
 use std::sync::Arc;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 #[rustfmt::skip]
 #[system]
