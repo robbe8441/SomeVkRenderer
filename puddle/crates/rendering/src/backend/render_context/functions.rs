@@ -39,8 +39,8 @@ impl RenderContext {
         vertex_buffer: &Buffer,
         index_buffer: &Buffer,
         pipeline: &wgpu::RenderPipeline,
+        bind_groups: &Vec<&wgpu::BindGroup>,
     ) {
-
         let color_attachments = Some(wgpu::RenderPassColorAttachment {
             view: &self.view,
             resolve_target: None,
@@ -60,9 +60,13 @@ impl RenderContext {
                 occlusion_query_set: None,
             });
 
+        for (i, bind_group) in bind_groups.iter().enumerate() {
+            rpass.set_bind_group(i as u32, bind_group, &[]);
+        }
         rpass.set_pipeline(&pipeline);
         rpass.set_vertex_buffer(0, vertex_buffer.buffer.slice(..));
-        rpass.set_index_buffer(index_buffer.buffer.slice(..), wgpu::IndexFormat::Uint16);
+        rpass.set_index_buffer(index_buffer.buffer.slice(..), wgpu::IndexFormat::Uint32);
         rpass.draw_indexed(0..index_buffer.lengh as u32, 0, 0..1);
+
     }
 }

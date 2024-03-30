@@ -21,7 +21,8 @@ impl RenderContext {
                 vertex_buffer,
                 index_buffer,
                 pipeline,
-            } => self.draw_indexed(vertex_buffer, index_buffer, pipeline),
+                bind_groups,
+            } => self.draw_indexed(vertex_buffer, index_buffer, pipeline, bind_groups),
         }
     }
 

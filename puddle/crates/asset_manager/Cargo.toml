@@ -11,3 +11,5 @@ rendering = { path = "../rendering" }
 regex = "1.10.4"
 filetime = "0.2.23"
 legion = "0.4.0"
+cgmath = "0.18.0"
+bytemuck = "1.15.0"

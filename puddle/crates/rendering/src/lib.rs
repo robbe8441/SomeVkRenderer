@@ -6,9 +6,12 @@ mod types;
 
 pub struct RenderPlugin;
 pub use types::Vertex;
-pub use wgpu::{RenderPipeline, self};
+pub use wgpu::{self, RenderPipeline};
 
-pub use backend::{Buffer, Renderer, RenderPipelineDesc};
+pub use backend::{
+    BindGroupLayout, BindGroupLayoutEntry, BindingType, Buffer, CullMode, RenderPipelineDesc,
+    Renderer,
+};
 pub use frontend::RenderPass;
 
 impl application::Plugin for RenderPlugin {

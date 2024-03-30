@@ -5,8 +5,9 @@ mod render_context;
 mod setup;
 
 pub use buffers::Buffer;
-pub use pipeline::RenderPipelineDesc;
+pub use pipeline::{CullMode, RenderPipelineDesc};
 pub use render_context::RenderContext;
+pub use bind_groups::*;
 
 use application::log::warn;
 use legion::{system, IntoQuery};
@@ -14,9 +15,6 @@ use std::{sync::Arc, time::Instant};
 use wgpu::{core::device::queue, util::DeviceExt};
 
 use bytemuck::cast_slice;
-
-
-
 
 /// the main renderer
 pub struct Renderer {
@@ -29,6 +27,7 @@ pub struct Renderer {
 
 impl Renderer {
     /// creates a new wgpu renderer and stores it as resource inside the app
+    #[inline]
     pub(crate) fn new(app: &mut application::Application) -> Self {
         setup::init(app)
     }
@@ -39,7 +38,7 @@ impl Renderer {
     /// ```
     ///  let render_context = renderer.create_render_context().unwrap();
     ///
-    ///  render_context.add_renderpass(RenderPass::ClearColor { color : [0.0, 0.0, 0.0, 0.0] });
+    ///  render_context.add_renderpass(RenderPass::ClearColor { color : [1.0, 0.0, 0.0, 0.0] });
     ///     
     ///  render_context.flush(renderer);
     ///
@@ -72,11 +71,13 @@ impl Renderer {
 
     /// updates the data on the buffer
     /// replaces it with a new buffer if the lengh doesnt match
-    fn update_buffer<T: bytemuck::Pod>(&mut self, buffer: &mut Buffer, data: &Vec<T>) {
+    #[inline(always)]
+    pub fn update_buffer<T: bytemuck::Pod>(&self, buffer: &mut Buffer, data: &[T]) {
         // check if the currently loaded buffer is the same lengh
         // as wgpu doesnt allow resizing buffers,
         // so we need to create a new buffer
-        if data.len() == data.len() {
+
+        if data.len() == buffer.lengh {
             self.queue.write_buffer(&buffer.buffer, 0, cast_slice(data));
         } else {
             *buffer = self.create_buffer(buffer.buffer.usage(), data);
@@ -86,20 +87,22 @@ impl Renderer {
     /// crates a new buffer used to store data on the gpu like veretcies
     /// usage tells wgpu what the buffer is used for
     /// "contents" is the data thats loaded on to the buffer / gpu
-    #[rustfmt::skip]
+    #[inline(always)]
     pub fn create_buffer<T: bytemuck::Pod>(
         &self,
         usage: wgpu::BufferUsages,
-        contents: &Vec<T>,
+        contents: &[T],
     ) -> Buffer {
-        let buffer = self.device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let buffer = self
+            .device
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: cast_slice(contents),
                 usage,
             });
 
         Buffer {
-            buffer,
+            buffer: Arc::new(buffer),
             lengh: contents.len(),
         }
     }

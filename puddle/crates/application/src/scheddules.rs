@@ -1,13 +1,17 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, time::Duration};
 
 #[derive(PartialEq, Eq, Hash, Clone)]
 pub enum Scheddules {
+    // fire on app starup
     Startup,
+    // fire every frame
     Update,
+    // fire every (...) secs
+    UpdateEvery(Duration),
 }
 
 pub struct SchedduleHandler {
-    list : HashMap<Scheddules, legion::systems::Builder>
+    pub list : HashMap<Scheddules, legion::systems::Builder>
 }
 
 impl SchedduleHandler {
@@ -21,7 +25,7 @@ impl SchedduleHandler {
         self.list.remove(&schedule)
     }
 
-    pub fn get_or_add(&mut self, schedule : Scheddules) -> *mut legion::systems::Builder {
+    pub(crate) fn get_or_add(&mut self, schedule : Scheddules) -> *mut legion::systems::Builder {
         match self.list.get_mut(&schedule) {
             Some(s) => s,
 

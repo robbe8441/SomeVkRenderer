@@ -28,6 +28,17 @@ pub(crate) fn runner(app: &mut Application) {
 
     startup_schedule.execute(&mut app.world, &mut app.resources);
 
+    let mut update_every_list : Vec<_> = app.scheddules.list.iter_mut().filter_map(|(schedule,mut sys)| {
+        match schedule {
+            application::Scheddules::UpdateEvery(time) => {
+                Some((time.clone(), Instant::now(), sys.build()))
+            }
+            _=>{None}
+        }
+    }).collect();
+
+
+
     event_loop
         .run(move |mut event, target| {
             crate::send_events::handle_events(&event, app);
@@ -44,6 +55,16 @@ pub(crate) fn runner(app: &mut Application) {
                 } => {
                     // update the game loop
                     update_schedule.execute(&mut app.world, &mut app.resources);
+
+                    // check for systems that need to update
+                    for (time, last_update, system) in update_every_list.iter_mut() {
+                        if last_update.elapsed().as_secs_f32() > time.as_secs_f32() {
+                            *last_update = Instant::now();
+                            system.execute(&mut app.world, &mut app.resources);
+                        }
+                    }
+
+
                 }
 
                 Event::AboutToWait => window.request_redraw(),

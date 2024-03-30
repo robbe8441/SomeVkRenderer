@@ -11,18 +11,18 @@ pub enum CullMode {
     None,
 }
 
-pub struct RenderPipelineDesc {
+pub struct RenderPipelineDesc<'a> {
     /// the shader used to draw the model
     /// right now this only supports one Shader
-    pub shader: wgpu::ShaderModuleDescriptor<'static>,
+    pub shader: wgpu::ShaderModuleDescriptor<'a>,
 
     /// The formats of the vertex buffers
     /// default is just the Vertex layout, can be expanded to be used for instancing
-    pub vertex_buffer_layouts: Vec<wgpu::VertexBufferLayout<'static>>,
+    pub vertex_buffer_layouts: Vec<wgpu::VertexBufferLayout<'a>>,
 
     /// the bind group layouts,
     /// used for textures, uniform buffers, and other buffers to be used in the shader
-    pub bind_group_layouts: Vec<&'static wgpu::BindGroupLayout>,
+    pub bind_group_layouts: Vec<&'a wgpu::BindGroupLayout>,
 
     /// allows transparency,
     /// Warning : this disables the early Deph Test, what makes rendering slower,
@@ -36,7 +36,7 @@ pub struct RenderPipelineDesc {
     pub cull_mode: CullMode,
 }
 
-impl Default for RenderPipelineDesc {
+impl Default for RenderPipelineDesc<'_> {
     fn default() -> Self {
         Self {
             // TODO : write better default shader, this one is trash
@@ -50,8 +50,9 @@ impl Default for RenderPipelineDesc {
 }
 
 impl super::Renderer {
-    /// creates a new render_pipeline based on the description you pass in
-    pub fn create_render_pipeline(&mut self, desc: &RenderPipelineDesc) -> wgpu::RenderPipeline {
+
+    /// creates a new render_pipeline based on the description passed in
+    pub fn create_render_pipeline(&self, desc: &RenderPipelineDesc) -> wgpu::RenderPipeline {
         let swapchain_capabilities = self.surface.get_capabilities(&self.adapter);
         let swapchain_format = swapchain_capabilities.formats[0];
 
