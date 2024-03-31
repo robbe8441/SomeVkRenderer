@@ -31,5 +31,10 @@ fn vs_main(vertex: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return vec4(in.normal, 1.0);
+
+    let light_dir = normalize(vec3(1.0, 0.5, 1.0));
+
+    let dot = dot(in.normal, light_dir) + 0.5;
+
+    return vec4(vec3(dot / 2.0), 1.0);
 }
