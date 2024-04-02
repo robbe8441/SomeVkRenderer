@@ -1,4 +1,5 @@
 use crate::{error, Model};
+use rendering::utils::MeshAsset;
 
 use filetime::FileTime;
 use legion::system;
@@ -34,6 +35,10 @@ impl HotReloading {
         })
     }
 
+    pub fn from_model_builder(model : &crate::model::ModelBuilder) -> Self {
+        Self::new(&model.file_path.clone().expect("no file path given")).unwrap()
+    }
+
     /// get the last time a file changed
     pub fn get_last_changed(file_path: &str) -> Result<FileTime> {
         let meta =
@@ -60,7 +65,7 @@ impl HotReloading {
 /// check for file changes
 #[system(par_for_each)]
 pub fn check_updates(
-    model: &mut Model,
+    asset: &mut MeshAsset,
     hot_reload: &mut HotReloading,
     #[resource] renderer: &Renderer,
 ) -> Result<()> {
@@ -69,10 +74,10 @@ pub fn check_updates(
     if last_changed > hot_reload.last_changed {
         let updated_file = hot_reload.load_file()?;
 
-        let new_data = crate::model_from_string(&updated_file);
+        let new_data = super::model::model_from_string(&updated_file);
 
-        renderer.update_buffer(&mut model.vertex_buffer, &new_data.vertecies);
-        renderer.update_buffer(&mut model.index_buffer, &new_data.indecies);
+        renderer.update_buffer(&mut asset.vertex_buffer, &new_data.vertecies);
+        renderer.update_buffer(&mut asset.index_buffer, &new_data.indecies);
 
         hot_reload.last_changed = last_changed;
     }

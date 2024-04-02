@@ -1,8 +1,6 @@
 use cgmath::Vector3;
-use rendering::{
-    wgpu::{BufferUsages, ShaderStages},
-    Buffer,
-};
+use wgpu::{BufferUsages, ShaderStages};
+use crate::Buffer;
 
 #[rustfmt::skip]
 pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
@@ -28,46 +26,6 @@ pub struct CameraData {
     zfar: f32,
 }
 
-pub struct Camera {
-    pub bind_group: rendering::wgpu::BindGroup,
-    pub bind_group_layout: rendering::wgpu::BindGroupLayout,
-    pub uniform_buffer: rendering::Buffer,
-    pub camera_uniform : CameraUniform,
-    pub data: CameraData,
-}
-
-impl Camera {
-    pub fn new(renderer: &rendering::Renderer) -> Self {
-        let data = CameraData::default();
-
-        let camera_uniform = CameraUniform {
-            view_proj: data.build_view_projection_matrix().into(),
-        };
-
-        let uniform_buffer = renderer.create_buffer(
-            BufferUsages::UNIFORM | BufferUsages::COPY_DST,
-            &[camera_uniform],
-        );
-
-        let layout = rendering::BindGroupLayout {
-            entries: vec![rendering::BindGroupLayoutEntry {
-                visibility: ShaderStages::VERTEX,
-                ty: rendering::BindingType::Buffer(rendering::wgpu::BufferBindingType::Uniform),
-                resource: uniform_buffer.binding(),
-            }],
-        };
-
-        let (bind_group, bind_group_layout) = layout.build(renderer);
-
-        Self {
-            bind_group,
-            bind_group_layout,
-            uniform_buffer,
-            camera_uniform,
-            data,
-        }
-    }
-}
 impl CameraData {
     pub fn build_view_projection_matrix(&self) -> cgmath::Matrix4<f32> {
         let view = cgmath::Matrix4::look_at_rh(self.eye, self.target, self.up);
@@ -83,7 +41,48 @@ impl CameraData {
             aspect: 1.0, // TODO : use width divided by hight
             fovy: 70.0,
             znear: 0.01,
-            zfar: 100.0,
+            zfar: 500.0,
+        }
+    }
+}
+
+pub struct Camera {
+    pub bind_group: crate::wgpu::BindGroup,
+    pub bind_group_layout: crate::wgpu::BindGroupLayout,
+    pub uniform_buffer: crate::Buffer,
+    pub camera_uniform : CameraUniform,
+    pub data: CameraData,
+}
+
+impl Camera {
+    pub fn new(renderer: &crate::Renderer) -> Self {
+        let data = CameraData::default();
+
+        let camera_uniform = CameraUniform {
+            view_proj: data.build_view_projection_matrix().into(),
+        };
+
+        let uniform_buffer = renderer.create_buffer(
+            BufferUsages::UNIFORM | BufferUsages::COPY_DST,
+            &[camera_uniform],
+        );
+
+        let layout = crate::BindGroupLayout {
+            entries: vec![crate::BindGroupLayoutEntry {
+                visibility: ShaderStages::VERTEX,
+                ty: crate::BindingType::Buffer(crate::wgpu::BufferBindingType::Uniform),
+                resource: uniform_buffer.binding(),
+            }],
+        };
+
+        let (bind_group, bind_group_layout) = layout.build(renderer);
+
+        Self {
+            bind_group,
+            bind_group_layout,
+            uniform_buffer,
+            camera_uniform,
+            data,
         }
     }
 }

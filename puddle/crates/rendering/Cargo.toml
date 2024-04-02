@@ -9,3 +9,5 @@ window = { path = "../window" }
 legion = "0.4.0"
 wgpu = "0.19.3"
 bytemuck = {version = "1.15.0", features = ["derive"]}
+regex = "1.10.4"
+cgmath = "0.18.0"

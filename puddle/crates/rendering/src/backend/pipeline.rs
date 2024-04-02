@@ -1,6 +1,6 @@
 use wgpu::include_wgsl;
 
-use crate::types::Vertex;
+use crate::Vertex;
 
 pub enum CullMode {
     // counter clock wise
@@ -34,7 +34,10 @@ pub struct RenderPipelineDesc<'a> {
     /// in some cases you want the faces to be inverted
     /// or no culling at all
     pub cull_mode: CullMode,
+
+    pub depth_stencil: Option<wgpu::DepthStencilState>,
 }
+
 
 impl Default for RenderPipelineDesc<'_> {
     fn default() -> Self {
@@ -45,12 +48,41 @@ impl Default for RenderPipelineDesc<'_> {
             allow_transparency: false,
             cull_mode: CullMode::Ccw,
             bind_group_layouts: vec![],
+            // TODO :  use own implementation
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: super::DEPTH_TEXTURE_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less, // 1.
+                stencil: wgpu::StencilState::default(),     // 2.
+                bias: wgpu::DepthBiasState::default(),
+            }),
+        }
+    }
+}
+
+
+impl RenderPipelineDesc<'_> {
+    pub fn default_instanced() -> Self {
+        Self {
+            // TODO : write better default shader, this one is trash
+            shader: include_wgsl!("./shader.wgsl"),
+            vertex_buffer_layouts: vec![Vertex::desc(), crate::utils::InstanceRaw::desc()],
+            allow_transparency: false,
+            cull_mode: CullMode::Ccw,
+            bind_group_layouts: vec![],
+            // TODO :  use own implementation
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: super::DEPTH_TEXTURE_FORMAT,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::Less, // 1.
+                stencil: wgpu::StencilState::default(),     // 2.
+                bias: wgpu::DepthBiasState::default(),
+            }),
         }
     }
 }
 
 impl super::Renderer {
-
     /// creates a new render_pipeline based on the description passed in
     pub fn create_render_pipeline(&self, desc: &RenderPipelineDesc) -> wgpu::RenderPipeline {
         let swapchain_capabilities = self.surface.get_capabilities(&self.adapter);
@@ -116,7 +148,7 @@ impl super::Renderer {
                 },
 
                 // TODO : Add depth buffer
-                depth_stencil: None,
+                depth_stencil: desc.depth_stencil.clone(),
                 multisample: wgpu::MultisampleState::default(),
                 multiview: None,
             });

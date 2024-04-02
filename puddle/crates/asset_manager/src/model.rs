@@ -1,32 +1,72 @@
-use crate::{material::Material, HotReloading};
 use application::log::error;
-use rendering::{wgpu::hal::auxil::db, Buffer};
+use legion::systems::CommandBuffer;
+use rendering::{
+    utils::{Material, Model, MeshAsset},
+    wgpu, Vertex,
+};
 
-use std::{fs, io::Read, path::Path, str::FromStr, sync::Arc};
+use std::{collections::HashMap, fs::OpenOptions, io::Read, path::Path, str::FromStr, sync::{Arc, Mutex}, thread};
 
-#[derive(Clone)]
-pub struct Model {
-    pub vertex_buffer: Buffer,
-    pub index_buffer: Buffer,
+type OnLoadedCallBack =
+    Arc<dyn Fn(legion::Entity, &mut ModelBuilder, &mut CommandBuffer) + Send + Sync>;
+
+pub struct AsyncModelBuilder {
+    pub path: String,
     pub material: Arc<Material>,
+    on_loaded: OnLoadedCallBack,
+}
+
+impl AsyncModelBuilder {
+    pub fn new(path: String, material: Arc<Material>) -> Self {
+        Self {
+            path,
+            material,
+            on_loaded: Arc::new(|_, _, _|{}),
+        }
+    }
+
+    #[inline]
+    pub fn and_then<F>(mut self, f: F) -> Self
+    where
+        F: Fn(legion::Entity, &mut ModelBuilder, &mut CommandBuffer)
+            + std::marker::Send
+            + std::marker::Sync
+            + 'static,
+    {
+        self.on_loaded = Arc::new(f);
+        self
+    }
+}
+
+pub struct AsyncModelQueue(pub Vec<AsyncModelBuilder>);
+
+impl AsyncModelQueue {
+    #[inline(always)]
+    pub fn push(&mut self, model: AsyncModelBuilder) {
+        self.0.push(model);
+    }
 }
 
 #[derive(Debug)]
 pub struct ModelBuilder {
-    pub vertecies: Vec<rendering::Vertex>,
+    pub vertecies: Vec<Vertex>,
     pub indecies: Vec<u32>,
     pub file_path: Option<String>,
 }
 
-impl ModelBuilder {
-    pub fn get_hot_reload(&self) -> std::io::Result<HotReloading> {
-        Ok(HotReloading::new(
-            self.file_path.clone().expect("no given file path").as_str(),
-        )?)
+impl Default for ModelBuilder {
+    fn default() -> Self {
+        Self {
+            vertecies: vec![],
+            indecies: vec![],
+            file_path: None,
+        }
     }
+}
 
-    pub fn build(self, renderer: &rendering::Renderer, material: Arc<Material>) -> Model {
-        use rendering::wgpu::BufferUsages;
+impl ModelBuilder {
+    pub fn build(self, renderer: &crate::Renderer, material: Arc<Material>) -> MeshAsset {
+        use wgpu::BufferUsages;
         let vertex_buffer = renderer.create_buffer(
             BufferUsages::VERTEX | BufferUsages::COPY_DST,
             &self.vertecies,
@@ -34,10 +74,57 @@ impl ModelBuilder {
         let index_buffer =
             renderer.create_buffer(BufferUsages::INDEX | BufferUsages::COPY_DST, &self.indecies);
 
-        Model {
+        let instance_buffer = 
+            renderer.create_buffer(BufferUsages::VERTEX | BufferUsages::COPY_DST, &self.indecies);
+
+        MeshAsset {
             vertex_buffer,
             index_buffer,
+            instance_buffer,
+            instances: Arc::new(Mutex::new(HashMap::new())),
             material,
+        }
+    }
+}
+
+#[legion::system]
+pub fn load_model_queue(
+    #[state] thread_pool: &mut Vec<
+        thread::JoinHandle<(ModelBuilder, Arc<Material>, OnLoadedCallBack)>,
+    >,
+    #[resource] renderer: &rendering::Renderer,
+    #[resource] loader: &mut AsyncModelQueue,
+    mut commands: &mut CommandBuffer,
+) {
+    if let Some(model) = loader.0.pop() {
+        thread_pool.push(thread::spawn(move || {
+            let builder = load_model(Path::new(&model.path));
+            (builder, model.material, model.on_loaded)
+        }));
+    }
+
+    for i in (0..thread_pool.len()).rev() {
+        if thread_pool[i].is_finished() {
+            let thread = thread_pool.remove(i);
+
+            thread
+                .join()
+                .and_then(|(mut model, material, callback)| {
+                    println!("loaded model");
+
+                    let entt = commands.push(());
+
+                    callback(entt, &mut model, &mut commands);
+
+                    let model = model.build(renderer, material);
+
+                    commands.add_component(entt, model);
+
+                    Ok(())
+                })
+                .inspect_err(|_| {
+                    error!("failed loading model async");
+                });
         }
     }
 }
@@ -52,7 +139,10 @@ where
         let parsed = match num.parse() {
             Ok(r) => r,
             Err(e) => {
-                error!("Failed parsing number when loading model : {}", e);
+                error!(
+                    "Failed parsing number when loading model : {} number : {}",
+                    e, num
+                );
                 continue;
             }
         };
@@ -63,75 +153,65 @@ where
 
 pub fn load_model(path: &Path) -> ModelBuilder {
     let mut string = String::new();
-    let file = fs::OpenOptions::new()
+    let file = OpenOptions::new()
         .read(true)
         .open(path)
         .and_then(|mut file| file.read_to_string(&mut string))
-        .inspect_err(|e| error!("failed to load model {}",e));
+        .inspect_err(|e| error!("failed to load model {}", e));
 
     let mut model = model_from_string(&string);
     model.file_path = path.to_str().map(|r| r.to_string());
     model
 }
-
 pub fn model_from_string(input: &str) -> ModelBuilder {
-    let mut model = ModelBuilder {
-        vertecies: vec![],
-        indecies: vec![],
-        file_path: None,
-    };
+    let mut model = ModelBuilder::default();
 
-    use regex::Regex;
-    use rendering::Vertex;
+    let mut vertex_positions = Vec::new();
+    let mut vertex_normals = Vec::new();
+    let mut vertex_uvs = Vec::new();
 
-    // best website everrr https://regexr.com/
-    let positions = Regex::new(r"v( -?(\d+)?\.\d+){3}").unwrap();
-    let normals = Regex::new(r"vn( -?(\d+)?\.\d+){3}").unwrap();
-    let uv_cords = Regex::new(r"vt( -?(\d+)?\.\d+){2}").unwrap();
+    for (i, line) in input.lines().enumerate() {
+        match &line[..2] {
+            "v " => {
+                let pos: [f32; 3] = parse_numbers(&line[2..])[0..3].try_into().unwrap();
+                vertex_positions.push(pos);
+            }
+            "vn" => {
+                let pos: [f32; 3] = parse_numbers(&line[2..])[0..3].try_into().unwrap();
+                vertex_normals.push(pos);
+            }
+            "vt" => {
+                let pos: [f32; 2] = parse_numbers(&line[2..])[0..2].try_into().unwrap();
+                vertex_uvs.push(pos);
+            }
+            "f " => {
+                let face_data = &line[2..].replace("/", " ");
+                //println!("{:?} in line {}", face_data, i);
+                let data: [usize; 9] = match parse_numbers(face_data)[0..9].try_into() {
+                    Ok(r) => r,
+                    Err(e) => {
+                        error!("failed to laod face : {}", e);
+                        continue;
+                    }
+                };
 
-    // pos, uv, normal
-    let faces = Regex::new(r"f( \d+\/\d+\/\d+){3}").unwrap();
+                let len = model.vertecies.len();
 
-    let mut vertex_positions: Vec<[f32; 3]> = vec![];
-    let mut vertex_normals: Vec<[f32; 3]> = vec![];
-    let mut vertex_uvs: Vec<[f32; 2]> = vec![];
+                let mut vertecies_to_add = vec![];
 
-    // get vertecies
-    for v in positions.find_iter(input) {
-        let vert = v.as_str().replace("v ", "");
-        let pos: [f32; 3] = parse_numbers(&vert).try_into().unwrap();
-        vertex_positions.push(pos);
-    }
+                for i in 0..3 {
+                    let face_data = &data[i * 3..];
+                    vertecies_to_add.push(Vertex {
+                        position: vertex_positions[face_data[0] - 1],
+                        uv_cords: vertex_uvs[face_data[1] - 1],
+                        normal: vertex_normals[face_data[2] - 1],
+                    });
+                }
 
-    // get normals
-    for v in normals.find_iter(input) {
-        let vert = v.as_str().replace("vn ", "");
-        let pos: [f32; 3] = parse_numbers(&vert).try_into().unwrap();
-        vertex_normals.push(pos);
-    }
-
-    // get uv's
-    for v in uv_cords.find_iter(input) {
-        let vert = v.as_str().replace("vt ", "");
-        let pos: [f32; 2] = parse_numbers(&vert).try_into().unwrap();
-        vertex_uvs.push(pos);
-    }
-
-    // load triangles
-    for v in faces.find_iter(input) {
-        let vert = v.as_str().replace("f ", "");
-
-        for vertex_data in vert.split_whitespace() {
-            let vertex_data = vertex_data.replace("/", " ");
-            let data: [usize; 3] = parse_numbers(&vertex_data).try_into().unwrap();
-
-            model.vertecies.push(Vertex {
-                position: vertex_positions[data[0] - 1],
-                uv_cords: vertex_uvs[data[1] - 1],
-                normal: vertex_normals[data[2] - 1],
-            });
-
-            model.indecies.push(model.vertecies.len() as u32 - 1);
+                model.vertecies.extend_from_slice(&vertecies_to_add);
+                model.indecies.extend((len as u32)..(len + 3) as u32);
+            }
+            _ => {}
         }
     }
 

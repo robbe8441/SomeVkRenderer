@@ -13,4 +13,12 @@ pub enum RenderPass<'a> {
         pipeline: &'a wgpu::RenderPipeline,
         bind_groups : &'a Vec<&'a wgpu::BindGroup>
     },
+    DrawInstanced {
+        vertex_buffer: &'a Buffer,
+        index_buffer: &'a Buffer,
+        instance_buffer: &'a Buffer,
+        instance_range: std::ops::Range<u32>,
+        pipeline: &'a wgpu::RenderPipeline,
+        bind_groups : &'a Vec<&'a wgpu::BindGroup>
+    },
 }

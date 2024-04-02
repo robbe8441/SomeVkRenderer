@@ -5,6 +5,7 @@ mod camera;
 mod materials;
 mod meshes;
 mod render_context;
+mod depth_buffer;
 
 pub use camera::{Camera, CameraUniform};
 pub use instaincing::*;

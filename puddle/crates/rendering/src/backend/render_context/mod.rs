@@ -9,6 +9,7 @@ pub struct RenderContext {
     pub view: Arc<wgpu::TextureView>,
     pub frame: wgpu::SurfaceTexture,
     pub command_encoder: wgpu::CommandEncoder,
+    pub depth_buffer_view : Arc<wgpu::TextureView>
 }
 
 impl RenderContext {
@@ -23,6 +24,14 @@ impl RenderContext {
                 pipeline,
                 bind_groups,
             } => self.draw_indexed(vertex_buffer, index_buffer, pipeline, bind_groups),
+            RenderPass::DrawInstanced {
+                vertex_buffer,
+                index_buffer,
+                instance_buffer,
+                instance_range,
+                pipeline,
+                bind_groups,
+            } => self.draw_indexed_instanced(vertex_buffer, index_buffer, instance_buffer, instance_range, pipeline, bind_groups),
         }
     }
 
