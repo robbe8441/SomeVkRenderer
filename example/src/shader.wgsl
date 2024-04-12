@@ -22,7 +22,14 @@ struct VertexOutput {
     @builtin(position) clip_position: vec4<f32>,
     @location(0) uv_cords: vec2<f32>,
     @location(1) normal: vec3<f32>,
+    @location(2) position: vec3<f32>,
 }
+
+struct TestUniform {
+    time: f32
+}
+@group(1) @binding(0)
+var<uniform> test_uniforms: TestUniform;
 
 
 @vertex
@@ -33,6 +40,7 @@ fn vs_main(vertex: VertexInput) -> VertexOutput {
     out.clip_position = camera.view_proj * vec4((vertex.position) * vec3(0.5), 1.0);
     out.uv_cords = vertex.uv_cords;
     out.normal = vertex.normal;
+    out.position = vertex.position;
     return out;
 }
 
@@ -43,5 +51,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     let dot = dot(in.normal, light_dir) + 0.5;
 
-    return vec4(vec3(dot / 2.0), 1.0);
+    let base_color = in.position.xyz / 100.0 * sin(test_uniforms.time / dot);
+
+    return vec4(vec3(dot / 2.0) + base_color, 1.0);
 }
