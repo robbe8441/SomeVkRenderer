@@ -8,11 +8,11 @@ use geese::EventQueue;
 pub use legion;
 pub use log;
 pub use plugins::{Plugin, PluginHandler};
-pub use scheddules::Scheddules;
+pub use schedules::Schedules;
 
 mod logger;
 mod plugins;
-mod scheddules;
+mod schedules;
 
 use geese::GeeseContext;
 
@@ -20,7 +20,7 @@ pub struct Application {
     pub world: legion::World,
     pub resources: legion::Resources,
     pub plugins: Option<plugins::PluginHandler>,
-    pub scheddules: scheddules::SchedduleHandler,
+    pub schedules: schedules::ScheduleHandler,
     pub runner: Option<Box<dyn FnOnce(&mut Application)>>,
     pub geese_context: GeeseContext,
 }
@@ -34,22 +34,22 @@ impl Application {
             plugins: None,
             world: legion::World::default(),
             resources: legion::Resources::default(),
-            scheddules: scheddules::SchedduleHandler::new(),
+            schedules: schedules::ScheduleHandler::new(),
             geese_context: GeeseContext::default(),
         };
 
-        app.scheddules.get_or_add(Scheddules::Update);
-        app.scheddules.get_or_add(Scheddules::Startup);
+        app.schedules.get_or_add(Schedules::Update);
+        app.schedules.get_or_add(Schedules::Startup);
 
         app.runner = Some(Box::new(|app| {
             let mut update_schedule = app
-                .scheddules
-                .remove(Scheddules::Update)
+                .schedules
+                .remove(Schedules::Update)
                 .unwrap()
                 .build();
             let mut startup_schedule = app
-                .scheddules
-                .remove(Scheddules::Startup)
+                .schedules
+                .remove(Schedules::Startup)
                 .unwrap()
                 .build();
 

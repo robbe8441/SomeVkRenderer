@@ -70,7 +70,7 @@ impl<'a> BindGroupLayout<'a> {
             .entries
             .iter()
             .enumerate()
-            .map(|(i, v)| wgpu::BindGroupLayoutEntry {
+            .map(|(i,v)| wgpu::BindGroupLayoutEntry {
                 binding: i as u32,
                 visibility: v.visibility,
                 ty: v.ty.clone().into(),

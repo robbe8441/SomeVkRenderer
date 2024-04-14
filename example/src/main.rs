@@ -3,7 +3,7 @@
 mod tests;
 use std::time::Instant;
 
-use application::Scheddules;
+use application::Schedules;
 use puddle::*;
 
 
@@ -18,16 +18,16 @@ fn main() {
     app.add_plugin(rendering::RenderPlugin);
     app.add_plugin(asset_manager::AssetManagerPlugin);
 
-    app.scheddules.add(
-        Scheddules::Update,
+    app.schedules.add(
+        Schedules::Update,
         tests::move_camera::update_cam_system(Instant::now()),
     );
-    app.scheddules.add(
-        Scheddules::Update,
+    app.schedules.add(
+        Schedules::Update,
         tests::async_loading::setup_system(false),
     );
-    app.scheddules.add(
-        Scheddules::Update,
+    app.schedules.add(
+        Schedules::Update,
         tests::async_loading::update_uniforms_system(Instant::now())
     );
 

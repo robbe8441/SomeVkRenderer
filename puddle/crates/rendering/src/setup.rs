@@ -1,9 +1,9 @@
 use super::*;
 
 pub fn init(app : &mut application::Application) {
-        use application::Scheddules;
-        app.scheddules
-            .add_non_parralel(Scheddules::Update, |world, resources| {
+        use application::Schedules;
+        app.schedules
+            .add_non_parallel(Schedules::Update, |world, resources| {
                 let mut renderer = match resources.get_mut::<Renderer>() {
                     Some(r) => r,
                     None => {
@@ -31,18 +31,16 @@ pub fn init(app : &mut application::Application) {
                 use application::legion::query::*;
                 let mut models = <&utils::MeshAsset>::query();
 
+
                 for model in models.iter(world) {
                     let mut bind_groups = vec![&camera.bind_group];
-
-                    if let Some(ref group) = model.material.bind_group {
-                        bind_groups.push(group);
-                    }
+                    bind_groups.extend(model.material.bind_groups.iter());
 
                     context.add_renderpass(RenderPass::DrawIndexed {
                         vertex_buffer: &model.vertex_buffer,
                         index_buffer: &model.index_buffer,
                         //instance_buffer: &model.instance_buffer,
-                        //instance_range: 0..model.instance_buffer.lengh.min(1) as u32,
+                        //instance_range: 0..model.instance_buffer.length.min(1) as u32,
                         pipeline: &model.material.pipeline,
                         bind_groups: &bind_groups,
                     });
@@ -51,7 +49,7 @@ pub fn init(app : &mut application::Application) {
                 context.flush(&mut renderer);
             });
 
-        app.scheddules.add_non_parralel(Scheddules::Startup, |world, resources| {
+        app.schedules.add_non_parallel(Schedules::Startup, |world, resources| {
 
             let renderer = resources.get::<Renderer>().expect("failed to crate camera: renderer does not exist");
 

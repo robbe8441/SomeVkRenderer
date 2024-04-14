@@ -14,13 +14,13 @@ pub(crate) fn runner(app: &mut Application) {
         .remove::<EventLoop<()>>()
         .expect("failed to get event_loop");
     let mut update_schedule = app
-        .scheddules
-        .remove(application::Scheddules::Update)
+        .schedules
+        .remove(application::Schedules::Update)
         .unwrap()
         .build();
     let mut startup_schedule = app
-        .scheddules
-        .remove(application::Scheddules::Startup)
+        .schedules
+        .remove(application::Schedules::Startup)
         .unwrap()
         .build();
 
@@ -28,9 +28,9 @@ pub(crate) fn runner(app: &mut Application) {
 
     startup_schedule.execute(&mut app.world, &mut app.resources);
 
-    let mut update_every_list : Vec<_> = app.scheddules.list.iter_mut().filter_map(|(schedule,mut sys)| {
+    let mut update_every_list : Vec<_> = app.schedules.list.iter_mut().filter_map(|(schedule,mut sys)| {
         match schedule {
-            application::Scheddules::UpdateEvery(time) => {
+            application::Schedules::UpdateEvery(time) => {
                 Some((time.clone(), Instant::now(), sys.build()))
             }
             _=>{None}

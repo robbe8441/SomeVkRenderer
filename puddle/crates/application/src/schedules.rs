@@ -1,8 +1,8 @@
 use std::{collections::HashMap, time::Duration};
 
 #[derive(PartialEq, Eq, Hash, Clone)]
-pub enum Scheddules {
-    // fire on app starup
+pub enum Schedules {
+    // fire on app startup
     Startup,
     // fire every frame
     Update,
@@ -10,22 +10,22 @@ pub enum Scheddules {
     UpdateEvery(Duration),
 }
 
-pub struct SchedduleHandler {
-    pub list : HashMap<Scheddules, legion::systems::Builder>
+pub struct ScheduleHandler {
+    pub list : HashMap<Schedules, legion::systems::Builder>
 }
 
-impl SchedduleHandler {
+impl ScheduleHandler {
     pub fn new() -> Self {
         Self {
             list : HashMap::new()
         }
     }
 
-    pub fn remove(&mut self, schedule : Scheddules) -> Option<legion::systems::Builder> {
+    pub fn remove(&mut self, schedule : Schedules) -> Option<legion::systems::Builder> {
         self.list.remove(&schedule)
     }
 
-    pub(crate) fn get_or_add(&mut self, schedule : Scheddules) -> *mut legion::systems::Builder {
+    pub(crate) fn get_or_add(&mut self, schedule : Schedules) -> *mut legion::systems::Builder {
         match self.list.get_mut(&schedule) {
             Some(s) => s,
 
@@ -37,7 +37,7 @@ impl SchedduleHandler {
         }
     }
 
-    pub fn add<T>(&mut self, schedule : Scheddules, system : T)
+    pub fn add<T>(&mut self, schedule : Schedules, system : T)
         where T : legion::systems::ParallelRunnable + 'static
     {
         let mut sys = self.get_or_add(schedule);
@@ -45,7 +45,7 @@ impl SchedduleHandler {
     }
 
 
-    pub fn add_non_parralel<T>(&mut self, schedule : Scheddules, system : T)
+    pub fn add_non_parallel<T>(&mut self, schedule : Schedules, system : T)
         where T : FnMut(&mut legion::World, &mut legion::Resources) + 'static
     {
         let mut sys = self.get_or_add(schedule);

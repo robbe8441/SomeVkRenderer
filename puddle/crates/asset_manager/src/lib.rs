@@ -8,15 +8,15 @@ use rendering::utils::{Material, Camera, Model};
 pub use hot_reload::HotReloading;
 
 use application::{
-    async_std::task, log::{error, warn}, Scheddules
+    async_std::task, log::{error, warn}, Schedules
 };
 use rendering::Renderer;
 use std::{
     io::{Read, Seek},
     str::FromStr,
     time::Duration, vec,
-};
-
+}; 
+ 
 use std::fs;
 
 pub struct AssetManagerPlugin;
@@ -24,12 +24,12 @@ pub struct AssetManagerPlugin;
 impl application::Plugin for AssetManagerPlugin {
     fn finish(&mut self, app: &mut application::Application) {
 
-        app.scheddules.add(
-            Scheddules::UpdateEvery(Duration::from_secs(2)),
+        app.schedules.add(
+            Schedules::UpdateEvery(Duration::from_secs(2)),
             hot_reload::check_updates_system(),
         );
 
-        app.scheddules.add(Scheddules::Update, model::load_model_queue_system(vec![]));
+        app.schedules.add(Schedules::Update, model::load_model_queue_system(vec![]));
 
         app.resources.insert(model::AsyncModelQueue(vec![]));
 
