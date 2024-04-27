@@ -93,14 +93,15 @@ impl Renderer {
         let buffer_clone = buffer.clone();
         let data = data.clone();
 
-        if data.len() == buffer.lengh {
+        if data.len() == buffer.length {
             queue.write_buffer(&buffer_clone.buffer, 0, cast_slice(&data));
         } else {
             *buffer = self.create_buffer(buffer.buffer.usage(), &data);
         }
     }
 
-    /// crates a new buffer used to store data on the gpu like veretcies
+
+    /// crates a new buffer used to store data on the gpu like vertices
     /// usage tells wgpu what the buffer is used for
     /// "contents" is the data thats loaded on to the buffer / gpu
     pub fn create_buffer<T: bytemuck::Pod>(
@@ -118,7 +119,7 @@ impl Renderer {
 
         Buffer {
             buffer: Arc::new(buffer),
-            lengh: contents.len(),
+            length: contents.len(),
         }
     }
 

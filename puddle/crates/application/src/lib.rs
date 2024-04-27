@@ -3,8 +3,6 @@ use std::ops::Deref;
 use std::sync::{Arc, Mutex};
 
 pub use async_std;
-pub use geese;
-use geese::EventQueue;
 pub use legion;
 pub use log;
 pub use plugins::{Plugin, PluginHandler};
@@ -14,15 +12,12 @@ mod logger;
 mod plugins;
 mod schedules;
 
-use geese::GeeseContext;
-
 pub struct Application {
     pub world: legion::World,
     pub resources: legion::Resources,
     pub plugins: Option<plugins::PluginHandler>,
     pub schedules: schedules::ScheduleHandler,
     pub runner: Option<Box<dyn FnOnce(&mut Application)>>,
-    pub geese_context: GeeseContext,
 }
 
 impl Application {
@@ -35,7 +30,6 @@ impl Application {
             world: legion::World::default(),
             resources: legion::Resources::default(),
             schedules: schedules::ScheduleHandler::new(),
-            geese_context: GeeseContext::default(),
         };
 
         app.schedules.get_or_add(Schedules::Update);
@@ -58,13 +52,6 @@ impl Application {
         }));
 
         app
-    }
-
-    pub fn add_event_listener<T: geese::GeeseSystem>(&mut self) -> &mut Self {
-        self.geese_context
-            .flush()
-            .with(geese::notify::add_system::<T>());
-        self
     }
 
     pub fn add_plugin(&mut self, plugin: impl Plugin + 'static) -> &mut Self {

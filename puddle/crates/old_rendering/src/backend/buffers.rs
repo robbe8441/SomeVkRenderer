@@ -3,7 +3,7 @@ use std::sync::Arc;
 #[derive(Clone)]
 pub struct Buffer {
     pub buffer: Arc<wgpu::Buffer>,
-    pub lengh : usize
+    pub length : usize
 }
 
 impl Buffer {

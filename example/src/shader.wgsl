@@ -51,7 +51,7 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
 
     let dot = dot(in.normal, light_dir) + 0.5;
 
-    let base_color = in.position.xyz / 100.0 * sin(test_uniforms.time / dot);
+    //let base_color = in.position.xyz / 100.0 * sin(test_uniforms.time / dot);
 
-    return vec4(vec3(dot / 2.0) + base_color, 1.0);
+    return vec4(vec3(dot / 2.0), 1.0);
 }

@@ -8,11 +8,6 @@ pub fn init(app: &mut application::Application) -> Renderer {
         .window
         .clone();
 
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-        backends: wgpu::Backends::PRIMARY,
-        ..Default::default()
-    });
-
     let window = app
         .resources
         .get_mut::<window::PuddleWindow>()
