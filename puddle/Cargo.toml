@@ -7,5 +7,7 @@ edition = "2021"
 application = { path = "./crates/application" }
 window = { path = "./crates/window" }
 rendering = { path = "./crates/rendering" }
+time = { path = "./crates/time" }
 #asset_manager = { path = "./crates/asset_manager" }
 legion = "0.4.0"
+

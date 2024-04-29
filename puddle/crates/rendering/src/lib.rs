@@ -1,5 +1,6 @@
 mod setup;
 mod draw;
+mod instances;
 
 pub struct RenderPlugin;
 
