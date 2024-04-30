@@ -1,32 +1,23 @@
-use std::sync::Arc;
-
-// use glam::{
-//     f32::{Mat3, Vec3},
-//     Mat4,
-// };
-
 use vulkano::{
     command_buffer::{
         sys::CommandBufferBeginInfo, CommandBufferLevel, CommandBufferUsage,
         RecordingCommandBuffer, RenderingAttachmentInfo, RenderingInfo,
     },
     descriptor_set::{DescriptorSet, WriteDescriptorSet},
-    image::{view::ImageView, Image},
-    pipeline::graphics::viewport::Viewport,
     pipeline::Pipeline,
     render_pass::{AttachmentLoadOp, AttachmentStoreOp},
-    swapchain::{acquire_next_image, SwapchainCreateInfo, SwapchainPresentInfo},
+    swapchain::{acquire_next_image, SwapchainPresentInfo},
     sync::{self, GpuFuture},
     Validated, VulkanError,
 };
 
-use crate::setup::RenderSurface;
+use crate::instances::Surface;
 
 pub fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
     let mut renderer = resources
         .get_mut::<super::setup::ForwardRenderer>()
         .unwrap();
-    let schene = resources.get::<super::setup::ExampleSchene>().unwrap();
+    let schene = resources.get::<super::setup::ExampleScene>().unwrap();
     let window = resources.get::<window::PuddleWindow>().unwrap();
 
     let image_extent: [u32; 2] = window.window.inner_size().into();
@@ -36,11 +27,9 @@ pub fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
     }
 
     use legion::IntoQuery;
-    let mut query = <&mut RenderSurface>::query();
-
+    let mut query = <&mut Surface>::query();
 
     for render_surface in query.iter_mut(world) {
-
         let uniform_buffer_subbuffer = {
             let elapsed = schene.rotation_start.elapsed().as_secs_f32();
 
@@ -76,22 +65,7 @@ pub fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
         // window size. In this example that includes the swapchain, the framebuffers and
         // the dynamic state viewport.
         if render_surface.recreate_swapchain {
-            let (new_swapchain, new_images) = render_surface
-                .swapchain
-                .recreate(SwapchainCreateInfo {
-                    image_extent,
-                    ..render_surface.swapchain.create_info()
-                })
-                .expect("failed to recreate swapchain");
-
-            render_surface.swapchain = new_swapchain;
-
-            // Now that we have new swapchain images, we must create new image views from
-            // them as well.
-            render_surface.attachment_image_views =
-                window_size_dependent_setup(&new_images, &mut render_surface.viewport);
-
-            render_surface.recreate_swapchain = false;
+            render_surface.reload_swapchain(image_extent);
         }
 
         // Before we can draw on the output, we have to *acquire* an image from the
@@ -235,17 +209,4 @@ pub fn draw(world: &mut legion::World, resources: &mut legion::Resources) {
             }
         }
     }
-}
-
-fn window_size_dependent_setup(
-    images: &[Arc<Image>],
-    viewport: &mut Viewport,
-) -> Vec<Arc<ImageView>> {
-    let extent = images[0].extent();
-    viewport.extent = [extent[0] as f32, extent[1] as f32];
-
-    images
-        .iter()
-        .map(|image| ImageView::new_default(image.clone()).unwrap())
-        .collect::<Vec<_>>()
 }

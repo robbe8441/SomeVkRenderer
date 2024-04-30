@@ -12,6 +12,7 @@ use winit::{event_loop::EventLoop, window::Window};
 
 pub struct WindowPlugin;
 
+#[derive(Clone)]
 pub struct PuddleWindow {
     pub window: Arc<Window>,
 }
