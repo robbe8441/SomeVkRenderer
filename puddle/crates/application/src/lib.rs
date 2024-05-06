@@ -1,23 +1,21 @@
 #![allow(unused, dead_code)]
-use std::ops::Deref;
-use std::sync::{Arc, Mutex};
 
 pub use async_std;
-pub use legion;
 pub use log;
 pub use plugins::{Plugin, PluginHandler};
-pub use schedules::Schedules;
+pub use schedule_handler::*;
+
+use bevy_ecs::{prelude::*, schedule::ScheduleLabel};
 
 mod logger;
 mod plugins;
-mod schedules;
+mod schedule_handler;
 
 pub struct Application {
-    pub world: legion::World,
-    pub resources: legion::Resources,
+    pub world: World,
     pub plugins: Option<plugins::PluginHandler>,
-    pub schedules: schedules::ScheduleHandler,
     pub runner: Option<Box<dyn FnOnce(&mut Application)>>,
+    pub schedules: Schedules,
 }
 
 impl Application {
@@ -27,29 +25,11 @@ impl Application {
         let mut app = Self {
             runner: None,
             plugins: None,
-            world: legion::World::default(),
-            resources: legion::Resources::default(),
-            schedules: schedules::ScheduleHandler::new(),
+            world: World::new(),
+            schedules: Schedules::new(),
         };
 
-        app.schedules.get_or_add(Schedules::Update);
-        app.schedules.get_or_add(Schedules::Startup);
-
-        app.runner = Some(Box::new(|app| {
-            let mut update_schedule = app
-                .schedules
-                .remove(Schedules::Update)
-                .unwrap()
-                .build();
-            let mut startup_schedule = app
-                .schedules
-                .remove(Schedules::Startup)
-                .unwrap()
-                .build();
-
-            startup_schedule.execute(&mut app.world, &mut app.resources);
-            update_schedule.execute(&mut app.world, &mut app.resources);
-        }));
+        app.runner = Some(Box::new(|_app| {}));
 
         app
     }
@@ -60,6 +40,36 @@ impl Application {
             .plugins
             .push(Box::new(plugin));
         self
+    }
+
+    pub fn get_schedule(&mut self, schedule: Schedule) {
+        self.schedules.insert(schedule);
+    }
+
+    pub fn add_resource(&mut self, value: impl Resource) {
+        self.world.insert_resource(value);
+    }
+    pub fn get_or_insert_resource<R: Resource>(&mut self, value: R) -> &R {
+        self.world.insert_resource(value);
+        self.world.get_resource::<R>().unwrap()
+    }
+
+    pub fn add_systems<M>(
+        &mut self,
+        label: impl ScheduleLabel + Clone,
+        systems: impl IntoSystemConfigs<M>,
+    ) {
+        let mut schedule = self
+            .schedules
+            .remove(label.clone())
+            .unwrap_or(Schedule::new(label));
+        schedule.add_systems(systems);
+        self.schedules.insert(schedule);
+    }
+
+    pub fn run_systems(&mut self, label: impl ScheduleLabel + Clone) {
+        let mut schedule = self.schedules.get_mut(label).unwrap();
+        schedule.run(&mut self.world);
     }
 
     pub fn run(mut self) {

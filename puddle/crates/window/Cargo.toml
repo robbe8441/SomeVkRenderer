@@ -6,4 +6,4 @@ edition = "2021"
 [dependencies]
 winit = "0.29.10"
 application = { path = "../application" }
-legion = "0.4.0"
+bevy_ecs = "0.13.2"

@@ -6,6 +6,6 @@ edition = "2021"
 [dependencies]
 async-std = "1.12.0"
 env_logger = "0.11.2"
-legion = "0.4.0"
+bevy_ecs = "0.13.2"
 log = "0.4.20"
 
