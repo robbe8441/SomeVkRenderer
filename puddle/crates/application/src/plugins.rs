@@ -33,3 +33,10 @@ impl PluginHandler {
         }
     }
 }
+
+
+impl Default for PluginHandler {
+    fn default() -> Self {
+        Self::new()
+    }
+}

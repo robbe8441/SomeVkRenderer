@@ -14,31 +14,29 @@ mod schedule_handler;
 pub struct Application {
     pub world: World,
     pub plugins: Option<plugins::PluginHandler>,
-    pub runner: Option<Box<dyn FnOnce(&mut Application)>>,
+    pub runner: Option<Box<dyn FnOnce(Application)>>,
     pub schedules: Schedules,
 }
 
 impl Application {
-    pub fn new() -> Self {
+    pub fn empty() -> Self {
         logger::init();
 
         let mut app = Self {
             runner: None,
-            plugins: None,
+            plugins: Some(PluginHandler::new()),
             world: World::new(),
             schedules: Schedules::new(),
         };
-
-        app.runner = Some(Box::new(|_app| {}));
 
         app
     }
 
     pub fn add_plugin(&mut self, plugin: impl Plugin + 'static) -> &mut Self {
-        self.plugins
-            .get_or_insert_with(|| PluginHandler::new())
-            .plugins
-            .push(Box::new(plugin));
+        let mut handler = self.plugins.take().unwrap_or(PluginHandler::new());
+        handler.plugins.push(Box::new(plugin));
+        self.plugins = Some(handler);
+
         self
     }
 
@@ -49,6 +47,7 @@ impl Application {
     pub fn add_resource(&mut self, value: impl Resource) {
         self.world.insert_resource(value);
     }
+
     pub fn get_or_insert_resource<R: Resource>(&mut self, value: R) -> &R {
         self.world.insert_resource(value);
         self.world.get_resource::<R>().unwrap()
@@ -61,10 +60,10 @@ impl Application {
     ) {
         let mut schedule = self
             .schedules
-            .remove(label.clone())
-            .unwrap_or(Schedule::new(label));
+            .get_mut(label.clone())
+            .expect("cant find schedule");
+
         schedule.add_systems(systems);
-        self.schedules.insert(schedule);
     }
 
     pub fn run_systems(&mut self, label: impl ScheduleLabel + Clone) {
@@ -73,20 +72,27 @@ impl Application {
     }
 
     pub fn run(mut self) {
-        let mut plugins = self.plugins.take();
 
-        if let Some(ref mut plugins) = plugins {
-            log::info!("setting up plugins");
+        if let Some(mut plugins) = self.plugins.take() {
             plugins.build(&mut self);
+            self.plugins = Some(plugins);
         }
 
         if let Some(runner) = self.runner.take() {
-            (runner)(&mut self)
-        }
-
-        if let Some(mut plugins) = plugins {
-            log::info!("cleaning up");
-            plugins.cleanup(&mut self);
+            (runner)(self)
         }
     }
+}
+
+
+impl Default for Application {
+
+    fn default() -> Self {
+        let mut app = Application::empty();
+
+        SchedulePlugin::build(&mut SchedulePlugin, &mut app);
+
+        app
+    }
+
 }

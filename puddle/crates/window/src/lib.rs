@@ -1,4 +1,5 @@
 mod event_runner;
+pub mod events;
 
 use bevy_ecs::system::Resource;
 use winit;
@@ -7,6 +8,18 @@ use application::{Application, Plugin};
 use std::sync::Arc;
 use winit::event_loop;
 
+
+
+
+
+/// a plugin that loads the main window and event loop
+/// this only supports one window, although multi window support is planned
+/// ```rust
+/// app.add_plugin(window::WindowPlugin);
+///
+/// fn foo(window: Res<window::Window>) {}
+///
+///```
 pub struct WindowPlugin;
 
 #[derive(Resource, Clone)]

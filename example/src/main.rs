@@ -2,7 +2,7 @@ use puddle::*;
 use bevy_ecs::system::Res;
 
 fn main() {
-    let mut app = puddle::application::Application::new();
+    let mut app = puddle::application::Application::default();
 
     app.add_plugin(window::WindowPlugin);
     app.add_plugin(rendering::RenderPlugin);

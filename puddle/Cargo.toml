@@ -10,3 +10,6 @@ rendering = { path = "./crates/rendering" }
 time = { path = "./crates/time" }
 #asset_manager = { path = "./crates/asset_manager" }
 
+[dev-dependencies]
+bevy_ecs = "0.13.2"
+

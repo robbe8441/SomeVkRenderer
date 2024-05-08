@@ -11,9 +11,47 @@ use bevy_ecs::{
 };
 
 #[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct PreStartup;
+
+
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Startup;
+
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct PostStartup;
+
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct PreUpdate;
+
 
 #[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
 pub struct Update;
 
 
+#[derive(ScheduleLabel, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct PostUpdate;
+
+
+
+
+pub struct SchedulePlugin;
+
+impl Plugin for SchedulePlugin {
+    fn build(&mut self, app: &mut Application) {
+
+        let schedule_order: Vec<InternedScheduleLabel> = vec![
+            PreStartup.intern(),
+            Startup.intern(),
+            PostStartup.intern(),
+
+            PreUpdate.intern(),
+            Update.intern(),
+            PostUpdate.intern(),
+        ];
+
+        for label in schedule_order {
+            let schedule = Schedule::new(label);
+            app.schedules.insert(schedule);
+        }
+    }
+}

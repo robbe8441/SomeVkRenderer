@@ -1,10 +1,13 @@
 use std::sync::Arc;
 
-use bevy_ecs::system::{Commands, Res, Resource};
+use bevy_ecs::system::{Commands, NonSendMut, Res, Resource};
 use vulkano::device::{
     physical::PhysicalDeviceType, Device, DeviceCreateInfo, DeviceExtensions, Queue,
     QueueCreateInfo, QueueFlags,
 };
+use vulkano::sync::GpuFuture;
+
+use crate::PreviousFrameEnd;
 
 use super::instance::RenderInstance;
 use super::surface::RenderSurface;
@@ -19,6 +22,7 @@ pub struct RenderDevice {
 pub fn create_device(
     instance: Res<RenderInstance>,
     surface: Res<RenderSurface>,
+    mut previous_frame_end: NonSendMut<PreviousFrameEnd>,
     mut commands: Commands,
 ) {
     let device_extensions = DeviceExtensions {
@@ -73,6 +77,8 @@ pub fn create_device(
         device,
         queue: queues.into_iter().last().unwrap(),
     };
+
+    previous_frame_end.0 = Some(vulkano::sync::now(render_device.device.clone()).boxed());
 
     commands.insert_resource(render_device)
 }
