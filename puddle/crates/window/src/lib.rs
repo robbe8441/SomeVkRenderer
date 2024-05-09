@@ -42,6 +42,9 @@ impl Plugin for WindowPlugin {
         app.world.insert_non_send_resource(EventLoop(event_loop));
 
         app.runner = Some(Box::new(event_runner::runner));
+
+        use bevy_ecs::event::EventRegistry;
+        EventRegistry::register_event::<events::Resized>(&mut app.world);
     }
 }
 

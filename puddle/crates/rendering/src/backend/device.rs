@@ -7,7 +7,7 @@ use vulkano::device::{
 };
 use vulkano::sync::GpuFuture;
 
-use crate::PreviousFrameEnd;
+pub struct PreviousFrameEnd(pub Option<Box<dyn GpuFuture>>);
 
 use super::instance::RenderInstance;
 use super::surface::RenderSurface;

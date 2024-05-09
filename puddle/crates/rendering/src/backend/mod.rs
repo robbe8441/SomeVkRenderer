@@ -21,5 +21,6 @@ pub fn init(app: &mut Application) {
             .chain(),
     );
 
+    app.world.insert_non_send_resource(device::PreviousFrameEnd(None));
     app.add_systems(PreUpdate, swapchain::on_window_resize);
 }

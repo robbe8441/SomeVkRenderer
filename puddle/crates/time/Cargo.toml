@@ -5,4 +5,5 @@ edition = "2021"
 
 [dependencies]
 application = {path = "../application"}
-bevy_ecs = "0.13.2"
+bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", package = "bevy_ecs" }
+

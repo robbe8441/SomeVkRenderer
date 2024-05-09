@@ -1,6 +1,6 @@
 use std::sync::Arc;
 
-use bevy_ecs::system::{Commands, Res, ResMut, Resource};
+use bevy_ecs::{event::EventWriter, system::{Commands, Res, ResMut, Resource}};
 use vulkano::{
     image::{Image, ImageUsage},
     swapchain::{PresentMode, SwapchainCreateInfo},
@@ -21,6 +21,7 @@ pub fn create_swapchain(
     window: Res<Window>,
     surface: Res<RenderSurface>,
     render_device: Res<RenderDevice>,
+    mut event: EventWriter<window::events::Resized>,
     mut commands: Commands,
 ) {
     let (swapchain, images) = {
@@ -56,6 +57,8 @@ pub fn create_swapchain(
         .unwrap()
     };
 
+    event.send(window::events::Resized(window.0.inner_size()));
+
     commands.insert_resource(Swapchain {
         swapchain,
         images,
@@ -63,10 +66,12 @@ pub fn create_swapchain(
     });
 }
 
+
 pub fn on_window_resize(
     mut swapchain: ResMut<Swapchain>,
     window: Res<window::Window>,
     surface: Res<RenderSurface>,
+    mut event: EventWriter<window::events::Resized>,
     render_device: Res<RenderDevice>,
 ) {
     if swapchain.recreate_swapchain {
@@ -101,5 +106,9 @@ pub fn on_window_resize(
 
         swapchain.images = new_images;
         swapchain.swapchain = new_swapchain;
+
+        swapchain.recreate_swapchain = false;
+
+        event.send(window::events::Resized(window.0.inner_size()));
     }
 }

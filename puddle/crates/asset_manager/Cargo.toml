@@ -7,9 +7,10 @@ edition = "2021"
 application = { path = "../application" }
 window = { path = "../window" }
 rendering = { path = "../rendering" }
+components = { path = "../components"}
+
+bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", package = "bevy_ecs" }
 
 regex = "1.10.4"
 filetime = "0.2.23"
-legion = "0.4.0"
-cgmath = "0.18.0"
 bytemuck = "1.15.0"
