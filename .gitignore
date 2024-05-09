@@ -1,6 +1,5 @@
 target/
 frames/
 *.lock
-*.obj
 *.mtl
 
