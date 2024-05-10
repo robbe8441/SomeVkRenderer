@@ -14,3 +14,4 @@ bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", packag
 regex = "1.10.4"
 filetime = "0.2.23"
 bytemuck = "1.15.0"
+rand = "0.8.5"

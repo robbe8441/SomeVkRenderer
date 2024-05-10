@@ -1,5 +1,6 @@
 pub mod backend;
 pub mod frontend;
+pub use vulkano;
 
 
 pub struct RenderPlugin;

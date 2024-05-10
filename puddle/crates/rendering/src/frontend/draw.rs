@@ -16,7 +16,7 @@ use crate::backend::{
 
 use super::{
     setup::PipelineSetup,
-    types::{Camera, VertexBuffer},
+    types::{Camera, VertexBuffer, VoxelDescriptorSet},
 };
 
 pub fn draw(
@@ -25,7 +25,7 @@ pub fn draw(
     mut previous_frame_end: NonSendMut<PreviousFrameEnd>,
     command_buffer_allocator: Res<backend::buffer::CommandBufferAllocator>,
     descriptor_set_allocator: Res<backend::buffer::DescriptorSetAllocator>,
-    vertex_buffer_query: Query<&VertexBuffer>,
+    vertex_buffer_query: Query<(&VertexBuffer, Option<&VoxelDescriptorSet>)>,
     pipeline_setup: Res<PipelineSetup>,
     camera: NonSend<Camera>,
 ) {
@@ -111,10 +111,19 @@ pub fn draw(
         )
         .unwrap();
 
-    for vertex_buffer in vertex_buffer_query.iter() {
+    for (vertex_buffer, descriptor_set) in vertex_buffer_query.iter() {
         builder
             .bind_vertex_buffers(0, vertex_buffer.0.clone())
             .unwrap();
+
+        if let Some(descriptor_set) = descriptor_set {
+            builder.bind_descriptor_sets(
+                PipelineBindPoint::Graphics,
+                pipeline_setup.pipeline.layout().clone(),
+                1,
+                descriptor_set.0.clone(),
+            ).unwrap();
+        }
 
         unsafe { builder.draw(vertex_buffer.0.len() as u32, 1, 0, 0) }.unwrap();
     }

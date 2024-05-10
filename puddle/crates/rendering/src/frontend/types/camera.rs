@@ -30,7 +30,6 @@ pub struct CameraUniform {
 
 impl Camera {
     pub fn build_proj(&self) -> Subbuffer<CameraUniform> {
-
         let view = Mat4::look_at_rh(
             self.transform.translation * Vec3::new(1.0, -1.0, 1.0),
             self.transform.forward(),
@@ -42,7 +41,7 @@ impl Camera {
 
         let uniform_data = CameraUniform {
             proj: (proj * view).to_cols_array_2d(),
-            pos: self.transform.translation.into(),
+            pos: self.transform.translation.to_array(),
         };
 
         let subbuffer = self.allocator.allocate_sized().unwrap();

@@ -30,7 +30,129 @@ pub fn load_vertex_buffers(
 
     for (entity, vertices) in model_query.iter() {
         let buffer = VertexBuffer::new(&memory_allocator, &vertices.0);
+
         dbg!("loaded buffer");
         commands.entity(entity).insert(buffer);
+    }
+}
+
+impl Vertices {
+    pub fn cube() -> Self {
+        Self(vec![
+            // Front face
+            Vertex3D {
+                position: [-0.5, -0.5, -0.5],
+            },
+            Vertex3D {
+                position: [0.5, -0.5, -0.5],
+            },
+            Vertex3D {
+                position: [0.5, 0.5, -0.5],
+            },
+            Vertex3D {
+                position: [0.5, 0.5, -0.5],
+            },
+            Vertex3D {
+                position: [-0.5, 0.5, -0.5],
+            },
+            Vertex3D {
+                position: [-0.5, -0.5, -0.5],
+            },
+            // Back face
+            Vertex3D {
+                position: [0.5, -0.5, 0.5],
+            },
+            Vertex3D {
+                position: [-0.5, -0.5, 0.5],
+            },
+            Vertex3D {
+                position: [-0.5, 0.5, 0.5],
+            },
+            Vertex3D {
+                position: [-0.5, 0.5, 0.5],
+            },
+            Vertex3D {
+                position: [0.5, 0.5, 0.5],
+            },
+            Vertex3D {
+                position: [0.5, -0.5, 0.5],
+            },
+            // Left face
+            Vertex3D {
+                position: [-0.5, -0.5, 0.5],
+            },
+            Vertex3D {
+                position: [-0.5, -0.5, -0.5],
+            },
+            Vertex3D {
+                position: [-0.5, 0.5, -0.5],
+            },
+            Vertex3D {
+                position: [-0.5, 0.5, -0.5],
+            },
+            Vertex3D {
+                position: [-0.5, 0.5, 0.5],
+            },
+            Vertex3D {
+                position: [-0.5, -0.5, 0.5],
+            },
+            // Right face
+            Vertex3D {
+                position: [0.5, -0.5, -0.5],
+            },
+            Vertex3D {
+                position: [0.5, -0.5, 0.5],
+            },
+            Vertex3D {
+                position: [0.5, 0.5, 0.5],
+            },
+            Vertex3D {
+                position: [0.5, 0.5, 0.5],
+            },
+            Vertex3D {
+                position: [0.5, 0.5, -0.5],
+            },
+            Vertex3D {
+                position: [0.5, -0.5, -0.5],
+            },
+            // Top face
+            Vertex3D {
+                position: [-0.5, 0.5, -0.5],
+            },
+            Vertex3D {
+                position: [0.5, 0.5, -0.5],
+            },
+            Vertex3D {
+                position: [0.5, 0.5, 0.5],
+            },
+            Vertex3D {
+                position: [0.5, 0.5, 0.5],
+            },
+            Vertex3D {
+                position: [-0.5, 0.5, 0.5],
+            },
+            Vertex3D {
+                position: [-0.5, 0.5, -0.5],
+            },
+            // Bottom face
+            Vertex3D {
+                position: [-0.5, -0.5, 0.5],
+            },
+            Vertex3D {
+                position: [0.5, -0.5, 0.5],
+            },
+            Vertex3D {
+                position: [0.5, -0.5, -0.5],
+            },
+            Vertex3D {
+                position: [0.5, -0.5, -0.5],
+            },
+            Vertex3D {
+                position: [-0.5, -0.5, -0.5],
+            },
+            Vertex3D {
+                position: [-0.5, -0.5, 0.5],
+            },
+        ])
     }
 }

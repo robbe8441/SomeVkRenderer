@@ -98,7 +98,7 @@ pub fn setup_pipeline(
                     ..Default::default()
                 }),
                 rasterization_state: Some(RasterizationState {
-                    cull_mode: vulkano::pipeline::graphics::rasterization::CullMode::None,
+                    cull_mode: vulkano::pipeline::graphics::rasterization::CullMode::Front,
                     ..Default::default()
                 }),
                 multisample_state: Some(MultisampleState::default()),
@@ -129,14 +129,6 @@ mod vs {
 mod fs {
     vulkano_shaders::shader! {
         ty: "fragment",
-        src: "
-            #version 460
-
-            layout(location = 0) out vec4 f_color;
-
-            void main() {
-                f_color = vec4(1.0, 0.0, 0.0, 1.0);
-            }
-        ",
+        path: "src/shaders/fragment.glsl",
     }
 }
