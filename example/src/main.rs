@@ -1,7 +1,8 @@
 use std::time::Instant;
 
 use bevy_ecs::system::{Commands, NonSendMut, Res, ResMut, Resource};
-use puddle::asset_manager::Vertices;
+use noise::NoiseFn;
+use puddle::asset_manager::{Vertices, VoxelMesh};
 use puddle::*;
 
 fn main() {
@@ -24,21 +25,44 @@ fn main() {
 
 fn load_model(mut commands: Commands) {
     let model = Vertices::cube();
-    commands.spawn(model);
+
+    let mut data: Vec<u8> = Vec::new();
+
+    let noise = noise::Simplex::new(0);
+
+    const CHUNK_SIZE: u32 = 9;
+    const NOISE_SCALE: f64 = 10.0;
+
+    for x in 0..CHUNK_SIZE {
+        for y in 0..CHUNK_SIZE {
+            for z in 0..CHUNK_SIZE {
+                let num = noise.get([
+                    x as f64 / NOISE_SCALE,
+                    y as f64 / NOISE_SCALE,
+                    z as f64 / NOISE_SCALE,
+                ]) > 0.0;
+                data.push(num as u8 * 255);
+            }
+        }
+    }
+
+    let voxels = VoxelMesh {
+        size: [9,9,9],
+        data,
+    };
+
+    commands.spawn((model, voxels));
 }
 
 use puddle::rendering::frontend::types::Camera;
 
-
-
-
 fn update_cam(mut cam: NonSendMut<Camera>, time: Res<time::Time>) {
-    let t = time.startup.elapsed().as_secs_f32();
+    let t = time.startup.elapsed().as_secs_f32() / 2.0;
     use components::Transform;
     use glam::Vec3;
 
-    let pos = Vec3::new(t.sin(), t.cos() / 10.0, t.cos()) * 2.0;
-    cam.transform = Transform::from_translation(pos).looking_at(Vec3::ZERO, Vec3::Y);
+    let pos = Vec3::new(t.sin(), t.cos(), t.cos()) * 2.0;
+    cam.transform = Transform::from_translation(pos).looking_at(Vec3::ZERO, Vec3::Y)
 }
 
 #[derive(Resource)]

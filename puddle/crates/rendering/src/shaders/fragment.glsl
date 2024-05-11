@@ -1,4 +1,5 @@
 #version 460
+#extension GL_EXT_samplerless_texture_functions : enable
 
 #define MAX_RAY_STEPS 300
 
@@ -10,10 +11,11 @@ layout(set = 0, binding = 0) uniform Camera {
     vec3 pos;
 } camera;
 
-// layout(set = 1, binding = 0) uniform utexture3D tex;
+layout(set = 1, binding = 0) uniform utexture3D tex;
 
-float SphereSDF(vec3 pos, float r) {
-    return length(pos) - r;
+uint GetVoxel(vec3 pos) {
+    ivec3 size = textureSize(tex,0) + 1;
+    return texelFetch(tex, ivec3((pos + 0.5) * size - 1.0), 0).r;
 }
 
 vec3 ray_cast() {
@@ -27,17 +29,17 @@ vec3 ray_cast() {
     while (current_dis < 10.0) {
         steps += 1;
 
-        float step_size = SphereSDF(rayPos + rayDir * current_dis, 0.1);
+        uint result = GetVoxel(rayPos + rayDir * current_dis);
 
-        if (step_size < 0.01) {
-            return vec3(1.0 - step_size);
+        if (result != 0) {
+            return vec3(result / 255 - current_dis / 6.0);
         }
 
-        current_dis += step_size;
+        current_dis += 0.01;
     }
 
 
-    return vec3(steps / 10.0);
+    return vec3(0.1);
 }
 
 void main() {

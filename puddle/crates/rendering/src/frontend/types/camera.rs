@@ -31,7 +31,7 @@ pub struct CameraUniform {
 impl Camera {
     pub fn build_proj(&self) -> Subbuffer<CameraUniform> {
         let view = Mat4::look_at_rh(
-            self.transform.translation * Vec3::new(1.0, -1.0, 1.0),
+            self.transform.translation,
             self.transform.forward(),
             self.transform.up(),
         );

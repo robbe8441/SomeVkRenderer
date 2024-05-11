@@ -117,12 +117,14 @@ pub fn draw(
             .unwrap();
 
         if let Some(descriptor_set) = descriptor_set {
-            builder.bind_descriptor_sets(
-                PipelineBindPoint::Graphics,
-                pipeline_setup.pipeline.layout().clone(),
-                1,
-                descriptor_set.0.clone(),
-            ).unwrap();
+            unsafe {
+                builder.bind_descriptor_sets_unchecked(
+                    PipelineBindPoint::Graphics,
+                    pipeline_setup.pipeline.layout().clone(),
+                    1,
+                    descriptor_set.0.clone(),
+                )
+            };
         }
 
         unsafe { builder.draw(vertex_buffer.0.len() as u32, 1, 0, 0) }.unwrap();
