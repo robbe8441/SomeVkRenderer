@@ -15,7 +15,7 @@ fn main() {
 
     app.add_systems(application::Update, (print_delta, update_cam));
 
-    app.add_systems(application::Startup, load_model);
+    app.add_systems(application::PostStartup, load_model);
 
     app.world
         .insert_resource(AverageFPS(2000.0, Instant::now()));
@@ -30,7 +30,8 @@ fn load_model(mut commands: Commands) {
 
     let noise = noise::Simplex::new(0);
 
-    const CHUNK_SIZE: u32 = 9;
+    const CHUNK_SIZE: u32 = 20;
+
     const NOISE_SCALE: f64 = 10.0;
 
     for x in 0..CHUNK_SIZE {
@@ -47,7 +48,7 @@ fn load_model(mut commands: Commands) {
     }
 
     let voxels = VoxelMesh {
-        size: [9,9,9],
+        size: [CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE],
         data,
     };
 
