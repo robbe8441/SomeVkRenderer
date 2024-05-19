@@ -1,9 +1,15 @@
 use std::time::Instant;
 
+use bevy_ecs::component::Component;
 use bevy_ecs::system::{Commands, NonSendMut, Res, ResMut, Resource};
 use noise::NoiseFn;
-use puddle::asset_manager::{Vertices, VoxelMesh};
+use puddle::asset_manager::Vertices;
+use puddle::components::Transform;
+use puddle::rendering::frontend::InstancingTransforms;
 use puddle::*;
+
+#[derive(Default, Resource, Component)]
+struct TerrainTextures;
 
 fn main() {
     let mut app = puddle::application::Application::default();
@@ -28,7 +34,7 @@ fn load_model(mut commands: Commands) {
 
     let mut data: Vec<u8> = Vec::new();
 
-    let noise = noise::Simplex::new(0);
+    let noise = noise::Worley::new(0);
 
     const CHUNK_SIZE: u32 = 20;
 
@@ -47,22 +53,31 @@ fn load_model(mut commands: Commands) {
         }
     }
 
-    let voxels = VoxelMesh {
-        size: [CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE],
-        data,
-    };
+    let voxels = asset_manager::RawTexture::new([CHUNK_SIZE, CHUNK_SIZE, CHUNK_SIZE], data);
 
-    commands.spawn((model, voxels));
+    let instance_transforms = InstancingTransforms(vec![
+        Transform::from_xyz(0.0, 0.0, 0.0),
+    ]);
+
+    commands.spawn((model, voxels, instance_transforms));
 }
+
+
+
+// fn update_cubes(mut query: Query<&mut Transform>, time: Res<time::Time>) {
+//     for (i, mut transform) in query.iter_mut().enumerate() {
+//         transform.translation.z = (time.startup.elapsed().as_secs_f32() + i as f32 / 2.0).sin();
+//     }
+// }
 
 use puddle::rendering::frontend::types::Camera;
 
 fn update_cam(mut cam: NonSendMut<Camera>, time: Res<time::Time>) {
-    let t = time.startup.elapsed().as_secs_f32() / 2.0;
+    let t = time.startup.elapsed().as_secs_f32() / 3.0;
     use components::Transform;
     use glam::Vec3;
 
-    let pos = Vec3::new(t.sin(), t.cos(), t.cos()) * 2.0;
+    let pos = Vec3::new(t.sin(), t.sin() / 4.0, t.cos()) * 2.0;
     cam.transform = Transform::from_translation(pos).looking_at(Vec3::ZERO, Vec3::Y)
 }
 
