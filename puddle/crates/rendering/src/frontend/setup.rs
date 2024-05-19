@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use super::types::Vertex3D;
-use crate::backend::{self, device::RenderDevice};
+use crate::{backend::{self, device::RenderDevice}, frontend::types::InstanceData};
 use bevy_ecs::{
     event::EventReader,
     system::{Commands, Res, Resource},
@@ -9,7 +9,7 @@ use bevy_ecs::{
 use vulkano::{
     pipeline::{
         graphics::{
-            color_blend::{ColorBlendAttachmentState, ColorBlendState},
+            color_blend::{AttachmentBlend, ColorBlendAttachmentState, ColorBlendState},
             multisample::MultisampleState,
             rasterization::RasterizationState,
             vertex_input::{Vertex, VertexDefinition},
@@ -42,7 +42,10 @@ pub fn setup_pipeline(
         let vs = vs.entry_point("main").unwrap();
         let fs = fs.entry_point("main").unwrap();
 
-        let vertex_input_state = Vertex3D::per_vertex().definition(&vs).unwrap();
+        let vertex_input_state = [Vertex3D::per_vertex(), InstanceData::per_instance()]
+            .definition(&vs)
+            .unwrap();
+
 
         let stages = [
             PipelineShaderStageCreateInfo::new(vs),
@@ -104,7 +107,10 @@ pub fn setup_pipeline(
                 multisample_state: Some(MultisampleState::default()),
                 color_blend_state: Some(ColorBlendState::with_attachment_states(
                     subpass.num_color_attachments(),
-                    ColorBlendAttachmentState::default(),
+                    ColorBlendAttachmentState {
+                        blend: Some(AttachmentBlend::alpha()),
+                        ..Default::default()
+                    },
                 )),
                 subpass: Some(subpass.into()),
                 ..GraphicsPipelineCreateInfo::layout(layout)

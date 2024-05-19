@@ -3,7 +3,7 @@ use std::sync::Arc;
 use bevy_ecs::system::{Commands, Res};
 use bevy_ecs::world::World;
 use components::Transform;
-use glam::{Mat4, Vec3};
+use glam::Mat4;
 use vulkano::buffer::{allocator::SubbufferAllocator, BufferUsage};
 use vulkano::buffer::{BufferContents, Subbuffer};
 use vulkano::memory::allocator::{MemoryTypeFilter, StandardMemoryAllocator};

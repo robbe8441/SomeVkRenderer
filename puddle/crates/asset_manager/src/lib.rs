@@ -1,13 +1,14 @@
 mod model;
+mod texture;
+pub use texture::RawTexture;
 
-use application::Update;
+use application::{PostStartup, PostUpdate};
 
 pub struct AssetManagerPlugin;
 
 use bevy_ecs::{
-    component::Component,
     entity::Entity,
-    query::Without,
+    query::Changed,
     system::{Commands, NonSendMut, Query, Res},
 };
 pub use model::{ModelBundle, Vertices};
@@ -34,19 +35,13 @@ use rendering::{
 
 impl application::Plugin for AssetManagerPlugin {
     fn finish(&mut self, app: &mut application::Application) {
-        app.add_systems(Update, model::load_vertex_buffers);
-        app.add_systems(Update, load_voxels);
+        app.add_systems(PostStartup, model::load_vertex_buffer);
+        app.add_systems(PostUpdate, load_voxels);
     }
 }
 
-#[derive(Component)]
-pub struct VoxelMesh {
-    pub size: [u32; 3],
-    pub data: Vec<u8>,
-}
-
 fn load_voxels(
-    voxel_query: Query<(Entity, &VoxelMesh), Without<VoxelDescriptorSet>>,
+    voxel_query: Query<(Entity, &RawTexture), Changed<RawTexture>>,
     descriptor_set_allocator: Res<DescriptorSetAllocator>,
     memory_allocator: Res<StandardMemoryAllocator>,
     command_buffer_allocator: Res<CommandBufferAllocator>,
@@ -58,8 +53,6 @@ fn load_voxels(
     if voxel_query.iter().count() == 0 {
         return;
     }
-
-    println!("upload model");
 
     let mut uploads = RecordingCommandBuffer::new(
         command_buffer_allocator.0.clone(),

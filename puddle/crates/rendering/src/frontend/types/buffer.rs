@@ -2,13 +2,15 @@ use std::sync::Arc;
 
 use bevy_ecs::{component::Component, system::Resource};
 use vulkano::{
-    buffer::{Buffer, BufferCreateInfo, BufferUsage, Subbuffer}, descriptor_set::DescriptorSet, memory::allocator::{AllocationCreateInfo, MemoryTypeFilter}
+    buffer::{Buffer, BufferCreateInfo, BufferUsage, Subbuffer},
+    descriptor_set::DescriptorSet,
+    memory::allocator::{AllocationCreateInfo, MemoryTypeFilter},
 };
 
 use super::Vertex3D;
 use crate::backend;
 
-#[derive(Component)]
+#[derive(Component, Resource)]
 pub struct VertexBuffer(pub Subbuffer<[Vertex3D]>);
 
 impl VertexBuffer {
@@ -35,15 +37,14 @@ impl VertexBuffer {
     }
 }
 
+#[derive(Component)]
+pub struct VoxelDescriptorSet(pub Arc<DescriptorSet>);
+
 #[derive(Component, Resource)]
 pub struct VoxelBuffer {
     pub buffer: Subbuffer<[u8]>,
     pub size: [u32; 3],
 }
-
-#[derive(Component)]
-pub struct VoxelDescriptorSet(pub Arc<DescriptorSet>);
-
 
 impl VoxelBuffer {
     pub fn new(

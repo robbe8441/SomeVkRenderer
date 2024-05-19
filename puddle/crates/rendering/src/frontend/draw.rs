@@ -15,6 +15,7 @@ use crate::backend::{
 };
 
 use super::{
+    instancing::InstanceBuffer,
     setup::PipelineSetup,
     types::{Camera, VertexBuffer, VoxelDescriptorSet},
 };
@@ -25,7 +26,8 @@ pub fn draw(
     mut previous_frame_end: NonSendMut<PreviousFrameEnd>,
     command_buffer_allocator: Res<backend::buffer::CommandBufferAllocator>,
     descriptor_set_allocator: Res<backend::buffer::DescriptorSetAllocator>,
-    vertex_buffer_query: Query<(&VertexBuffer, Option<&VoxelDescriptorSet>)>,
+    vertex_buffer_query: Query<(&VoxelDescriptorSet, &InstanceBuffer)>,
+    vertex_buffer: Res<VertexBuffer>,
     pipeline_setup: Res<PipelineSetup>,
     camera: NonSend<Camera>,
 ) {
@@ -94,7 +96,7 @@ pub fn draw(
 
     use vulkano::pipeline::Pipeline;
     let layout = &pipeline_setup.pipeline.layout().set_layouts()[0];
-    let set = DescriptorSet::new(
+    let camera_set = DescriptorSet::new(
         descriptor_set_allocator.0.clone(),
         layout.clone(),
         [WriteDescriptorSet::buffer(0, cam_uniform)],
@@ -107,27 +109,30 @@ pub fn draw(
             PipelineBindPoint::Graphics,
             pipeline_setup.pipeline.layout().clone(),
             0,
-            set,
+            camera_set,
         )
         .unwrap();
 
-    for (vertex_buffer, descriptor_set) in vertex_buffer_query.iter() {
+    for (descriptor_set, instance_buffer) in vertex_buffer_query.iter() {
         builder
-            .bind_vertex_buffers(0, vertex_buffer.0.clone())
+            .bind_vertex_buffers(0, (vertex_buffer.0.clone(), instance_buffer.0.clone()))
             .unwrap();
-
-        if let Some(descriptor_set) = descriptor_set {
-            unsafe {
-                builder.bind_descriptor_sets_unchecked(
+        unsafe {
+            builder
+                .bind_descriptor_sets_unchecked(
                     PipelineBindPoint::Graphics,
                     pipeline_setup.pipeline.layout().clone(),
                     1,
                     descriptor_set.0.clone(),
                 )
-            };
+                .draw(
+                    vertex_buffer.0.len() as u32,
+                    instance_buffer.0.len() as u32,
+                    0,
+                    0,
+                )
         }
-
-        unsafe { builder.draw(vertex_buffer.0.len() as u32, 1, 0, 0) }.unwrap();
+        .unwrap();
     }
     builder.end_render_pass(SubpassEndInfo::default()).unwrap();
 

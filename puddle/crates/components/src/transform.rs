@@ -4,7 +4,7 @@ use glam::{Quat, Vec3, Mat4, Mat3, Affine3A};
 // code from bevy_transform
 
 
-#[derive(Component, Resource)]
+#[derive(Component, Resource, Clone, Copy)]
 pub struct Transform {
     pub translation: Vec3,
     pub rotation: Quat,

@@ -36,9 +36,9 @@ fn load_model(mut commands: Commands) {
 
     let noise = noise::Worley::new(0);
 
-    const CHUNK_SIZE: u32 = 20;
+    const CHUNK_SIZE: u32 = 10;
 
-    const NOISE_SCALE: f64 = 10.0;
+    const NOISE_SCALE: f64 = 5.0;
 
     for x in 0..CHUNK_SIZE {
         for y in 0..CHUNK_SIZE {
