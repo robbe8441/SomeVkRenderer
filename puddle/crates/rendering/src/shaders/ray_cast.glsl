@@ -53,9 +53,9 @@ RayCastResult ray_cast(vec3 origin, vec3 direction, utexture3D voxel_texture) {
                 normal = vec3(0.0, 0.0, ray_normal_dir.z);
             }
         }
-        // if (clamp(mapPos, ivec3(0), grid_size) != mapPos) {
-        //     break;
-        // }
+        if (clamp(mapPos, ivec3(0), grid_size) != mapPos) {
+            break;
+        }
     }
 
     RayCastResult res = RayCastResult(normal, hit);

@@ -21,7 +21,6 @@ void main() {
 
     RayCastResult res = ray_cast(rayPos, rayDir, voxel_texture);
 
-
     if (res.hit_block_id == 0) {
         f_color = vec4(0.0);
         return;
@@ -32,5 +31,5 @@ void main() {
 
     float light_val = max(dot_product, 0.3);
 
-    f_color = vec4(vec3(dot_product), 1.0);
+    f_color = vec4(vec3(light_val), 1.0);
 }
