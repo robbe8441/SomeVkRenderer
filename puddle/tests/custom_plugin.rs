@@ -24,7 +24,7 @@ fn read_resource(resource: Res<TestResource>) {
 
 #[test]
 fn plugin() {
-    let mut app = Application::new();
+    let mut app = Application::default();
     app.add_plugin(TestPlugin);
 
     app.add_systems(Startup, read_resource);

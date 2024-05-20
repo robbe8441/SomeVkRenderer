@@ -1,0 +1,11 @@
+[package]
+name = "animation"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+application = { path = "../application" }
+rendering = { path = "../rendering" }
+asset_manager = { path = "../asset_manager" }
+
+bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", package = "bevy_ecs" }

@@ -24,8 +24,10 @@ impl RawTexture {
         let data: Vec<u8> = data.into();
         let size: [u32; 3] = size.into();
 
-        if data.len() as u32 != size.iter().product() {
-            panic!("data doesn't match expected size");
+        let expected = size.iter().product();
+
+        if data.len() as u32 != expected {
+            panic!("data of size: {} doesn't match expected size: {}", data.len(), expected);
         }
 
         Self { data, size }
