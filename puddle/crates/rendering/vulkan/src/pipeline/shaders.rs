@@ -6,7 +6,7 @@ pub struct GraphicsShaderSet {
 }
 
 impl GraphicsShaderSet {
-    pub fn default(device: &crate::vulkan::Device) -> Self {
+    pub fn default(device: &crate::Device) -> Self {
         let vs = vs::load(device.device.clone())
             .unwrap()
             .entry_point("main")

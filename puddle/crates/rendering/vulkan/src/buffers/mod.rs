@@ -1,8 +1,8 @@
 mod vertex_buffer;
-mod frame_buffer;
+mod index_buffer;
 
 pub use vertex_buffer::VertexBuffer;
-pub use frame_buffer::FrameBuffer;
+pub use index_buffer::IndexBuffer;
 
 
 

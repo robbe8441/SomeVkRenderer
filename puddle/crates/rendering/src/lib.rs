@@ -1,5 +1,3 @@
-mod vulkan;
-
 pub struct RenderPlugin;
 
 impl application::Plugin for RenderPlugin {
@@ -17,17 +15,12 @@ use core::panic;
 
 use bevy_ecs::system::{Commands, NonSendMut, Res, ResMut, Resource};
 use vulkan::*;
-use vulkano::{
-    command_buffer::RenderPassBeginInfo,
-    image::view::ImageView,
-    pipeline::graphics::subpass::PipelineSubpassType,
-    render_pass::{Framebuffer, FramebufferCreateInfo},
-};
 
 #[derive(Resource)]
 struct RenderSetup {
     pipeline: graphics::GraphicsPipeline,
     vertex_buffer: VertexBuffer,
+    index_buffer: IndexBuffer,
 }
 
 fn setup_render_stuff(
@@ -43,7 +36,7 @@ fn setup_render_stuff(
         &graphics::GraphicsPipelineDescriber {
             shaders,
             extent: swapchain.swapchain.image_extent(),
-            render_pass: vulkano::single_pass_renderpass!(
+            render_pass: vulkan::single_pass_renderpass!(
             device.device.clone(),
             attachments: {
                 color: {
@@ -62,24 +55,15 @@ fn setup_render_stuff(
         },
     );
 
-    use utils::Vertex;
-    let vertecies = vec![
-        Vertex {
-            position: [0.0, 0.0, 0.0],
-        },
-        Vertex {
-            position: [1.0, 0.0, 0.0],
-        },
-        Vertex {
-            position: [1.0, 1.0, 0.0],
-        },
-    ];
+    let mesh = utils::Mesh::plane();
 
-    let vertex_buffer = VertexBuffer::new(&memory_allocator, &vertecies);
+    let vertex_buffer = VertexBuffer::new(&memory_allocator, mesh.vertecies);
+    let index_buffer = IndexBuffer::new(&memory_allocator, mesh.indices);
 
     commands.insert_resource(RenderSetup {
         pipeline,
         vertex_buffer,
+        index_buffer,
     })
 }
 
@@ -96,12 +80,12 @@ fn draw(
         let image = swapchain.images[render_context.image_index.unwrap() as usize].clone();
 
         let view = ImageView::new_default(image.clone()).unwrap();
-        Framebuffer::new(
+        vulkan::Framebuffer::new(
             match render_setup.pipeline.0.subpass() {
                 PipelineSubpassType::BeginRenderPass(r) => r.render_pass().clone(),
                 _ => panic!("something went wrong"),
             },
-            FramebufferCreateInfo {
+            vulkan::FramebufferCreateInfo {
                 attachments: vec![view],
                 ..Default::default()
             },
@@ -112,11 +96,12 @@ fn draw(
     render_context
         .begin_render_pass(RenderPassBeginInfo {
             clear_values: vec![Some([0.0, 0.0, 0.0, 1.0].into())],
-            ..RenderPassBeginInfo::framebuffer(framebuffer.clone())
+            ..vulkan::RenderPassBeginInfo::framebuffer(framebuffer.clone())
         })
         .bind_pipeline_graphics(&render_setup.pipeline)
         .bind_vertex_buffers(0, render_setup.vertex_buffer.0.clone())
-        .draw(render_setup.vertex_buffer.0.len() as u32, 1, 0, 0)
+        .bind_index_buffer(render_setup.index_buffer.0.clone())
+        .draw_indexed(render_setup.index_buffer.0.len() as u32, 1, 0, 0, 0)
         .end_render_pass();
 
     render_context.submit(&device, &mut swapchain);

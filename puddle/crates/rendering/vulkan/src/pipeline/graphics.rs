@@ -27,7 +27,7 @@ pub struct GraphicsPipelineDescriber {
 }
 
 impl GraphicsPipeline {
-    pub fn new(device: &crate::vulkan::Device, desc: &GraphicsPipelineDescriber) -> Self {
+    pub fn new(device: &crate::Device, desc: &GraphicsPipelineDescriber) -> Self {
         let vertex_input_state = utils::Vertex::per_vertex()
             .definition(&desc.shaders.vertex)
             .unwrap();

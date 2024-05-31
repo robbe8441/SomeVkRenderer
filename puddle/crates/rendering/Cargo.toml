@@ -5,13 +5,11 @@ edition = "2021"
 
 [dependencies]
 application = { path = "../application" }
-window = { path = "../window" }
 utils = { path = "../utils/" }
+vulkan = { path = "./vulkan" }
 
 bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", package = "bevy_ecs" }
 bytemuck = { version = "1.15.0", features = ["derive"] }
 
 regex = "1.10.4"
-vulkano-shaders = "0.34.0"
 glam = "0.27.0"
-vulkano = { git = "https://github.com/vulkano-rs/vulkano", branch = "master", features = ["macros", "document_unchecked"], default-features = false }

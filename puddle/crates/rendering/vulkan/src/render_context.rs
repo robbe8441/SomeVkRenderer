@@ -102,7 +102,7 @@ impl RenderContext {
     #[inline(always)]
     pub fn bind_pipeline_graphics(
         &mut self,
-        pipeline: &crate::vulkan::pipeline::graphics::GraphicsPipeline,
+        pipeline: &crate::pipeline::graphics::GraphicsPipeline,
     ) -> &mut Self {
         self.recording_buffer
             .as_mut()
@@ -123,6 +123,42 @@ impl RenderContext {
             .unwrap()
             .bind_vertex_buffers(first_binding, vertex_buffers)
             .unwrap();
+        self
+    }
+
+    #[inline(always)]
+    pub fn bind_index_buffer(
+        &mut self,
+        buffer: impl Into<vulkano::buffer::IndexBuffer>,
+    ) -> &mut Self {
+        self.recording_buffer
+            .as_mut()
+            .unwrap()
+            .bind_index_buffer(buffer)
+            .unwrap();
+        self
+    }
+
+    #[inline(always)]
+    pub fn draw_indexed(
+        &mut self,
+        index_count: u32,
+        instance_count: u32,
+        first_index: u32,
+        vertex_offset: i32,
+        first_instance: u32,
+    ) -> &mut Self {
+        unsafe {
+            self.recording_buffer.as_mut().unwrap().draw_indexed(
+                index_count,
+                instance_count,
+                first_index,
+                vertex_offset,
+                first_instance,
+            )
+        }
+        .unwrap();
+
         self
     }
 
