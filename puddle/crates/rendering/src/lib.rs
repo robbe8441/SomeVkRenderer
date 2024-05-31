@@ -11,6 +11,7 @@ impl application::Plugin for RenderPlugin {
     }
 }
 
+
 use core::panic;
 
 use bevy_ecs::system::{Commands, NonSendMut, Res, ResMut, Resource};
@@ -73,8 +74,12 @@ fn draw(
     mut swapchain: ResMut<Swapchain>,
     command_buffer_allocator: Res<CommandBufferAllocator>,
     mut render_context: NonSendMut<RenderContext>,
+    mut previous_fame_end: NonSendMut<PreviousFrameEnd>,
 ) {
-    render_context.begin_render(&device, &mut swapchain, &command_buffer_allocator);
+    match render_context.begin_render(&device, &mut swapchain, &command_buffer_allocator) {
+        Err(RunContextError::SwapchainOutdated) => return,
+        _ => {}
+    }
 
     let framebuffer = {
         let image = swapchain.images[render_context.image_index.unwrap() as usize].clone();
@@ -98,11 +103,13 @@ fn draw(
             clear_values: vec![Some([0.0, 0.0, 0.0, 1.0].into())],
             ..vulkan::RenderPassBeginInfo::framebuffer(framebuffer.clone())
         })
-        .bind_pipeline_graphics(&render_setup.pipeline)
+        .bind_pipeline(&render_setup.pipeline)
         .bind_vertex_buffers(0, render_setup.vertex_buffer.0.clone())
-        .bind_index_buffer(render_setup.index_buffer.0.clone())
+        .bind_index_buffer(&render_setup.index_buffer)
         .draw_indexed(render_setup.index_buffer.0.len() as u32, 1, 0, 0, 0)
         .end_render_pass();
 
-    render_context.submit(&device, &mut swapchain);
+        previous_fame_end.cleanup_finished();
+
+        previous_fame_end.submit_render_context(&device, &mut render_context, &mut swapchain);
 }

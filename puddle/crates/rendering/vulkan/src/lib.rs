@@ -1,6 +1,7 @@
 mod allocators;
 mod buffers;
 mod device;
+mod gpu_future;
 mod instance;
 mod pipeline;
 mod render_context;
@@ -23,6 +24,7 @@ pub use pipeline::*;
 pub use render_context::*;
 pub use surface::*;
 pub use swapchain::*;
+pub use gpu_future::*;
 
 pub use vulkano::single_pass_renderpass;
 pub use vulkano::{
@@ -55,9 +57,11 @@ pub fn init(
 
     commands.add(|world: &mut World| {
         let device = world.get_resource::<Device>().unwrap();
-        let render_context = RenderContext::new(&device);
+        let previous_frame_end = gpu_future::PreviousFrameEnd::new(&device);
+        let render_context = RenderContext::new();
 
         world.insert_non_send_resource(render_context);
+        world.insert_non_send_resource(previous_frame_end);
     });
 }
 
