@@ -1,5 +1,5 @@
 use bevy_ecs::{bundle::Bundle, component::Component, system::Commands};
-use components::Transform;
+use utils::Transform;
 use rendering::{
     backend::buffer::StandardMemoryAllocator,
     frontend::types::Vertex3D,

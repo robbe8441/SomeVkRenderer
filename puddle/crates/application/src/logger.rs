@@ -6,8 +6,6 @@ pub fn init() {
     env_logger::builder()
         .format_timestamp(None)
         .write_style(env_logger::WriteStyle::Always)
-        .filter_level(log::LevelFilter::Warn)
+        .filter_level(log::LevelFilter::Trace)
         .init();
-
-    debug!("Setting up logger");
 }

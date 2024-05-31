@@ -45,6 +45,7 @@ impl Plugin for WindowPlugin {
 
         use bevy_ecs::event::EventRegistry;
         EventRegistry::register_event::<events::Resized>(&mut app.world);
+
     }
 }
 

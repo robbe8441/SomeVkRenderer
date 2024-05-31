@@ -22,7 +22,7 @@ impl AnimationController {
 
     pub fn get_frame(&self) -> &RawTexture {
         let elapsed = self.start_time.elapsed().as_secs_f32();
-        let frame = (elapsed / self.animation_playing.fps) * self.playback_speed;
+        let frame = (elapsed * self.animation_playing.fps) * self.playback_speed;
 
         let index = frame.floor() as usize % self.animation_playing.frames.len();
 

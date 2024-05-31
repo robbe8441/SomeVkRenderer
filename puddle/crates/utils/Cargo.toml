@@ -1,0 +1,10 @@
+[package]
+name = "utils"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+glam = "0.27.0"
+
+bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", package = "bevy_ecs" }
+vulkano = { git = "https://github.com/vulkano-rs/vulkano", branch = "master", features = ["macros", "document_unchecked"], default-features = false }

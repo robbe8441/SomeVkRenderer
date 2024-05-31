@@ -8,9 +8,10 @@ application = { path = "./crates/application" }
 window = { path = "./crates/window" }
 rendering = { path = "./crates/rendering" }
 time = { path = "./crates/time" }
-components = { path = "./crates/components"}
-asset_manager = { path = "./crates/asset_manager" }
-animation = { path = "./crates/animation" }
+utils = { path = "./crates/utils" }
+# components = { path = "./crates/components"}
+# asset_manager = { path = "./crates/asset_manager" }
+# animation = { path = "./crates/animation" }
 
 [dev-dependencies]
 bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", package = "bevy_ecs" }

@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 application = { path = "../application" }
 window = { path = "../window" }
-components = { path = "../components/" }
+utils = { path = "../utils/" }
 
 bevy_ecs = { git = "https://github.com/bevyengine/bevy", branch = "main", package = "bevy_ecs" }
 bytemuck = { version = "1.15.0", features = ["derive"] }

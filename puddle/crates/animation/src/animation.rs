@@ -1,3 +1,4 @@
+use core::panic;
 use std::sync::Arc;
 use asset_manager::RawTexture;
 
@@ -16,8 +17,13 @@ pub struct Animation {
 
 impl Animation {
     pub fn new(frames: impl Into<Vec<RawTexture>>, fps: f32) -> Arc<Self> {
+        let frames = frames.into();
+        if frames.len() == 0 {
+            panic!("animation cant have a length of zero");
+        }
+
         Arc::new(Self {
-            frames: frames.into(),
+            frames,
             fps,
         })
     }

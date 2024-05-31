@@ -17,10 +17,7 @@ use rendering::{
         buffer::{CommandBufferAllocator, DescriptorSetAllocator, StandardMemoryAllocator},
         device::{PreviousFrameEnd, RenderDevice},
     },
-    frontend::{
-        types::{VoxelBuffer, VoxelDescriptorSet},
-        PipelineSetup,
-    },
+    frontend::types::{Material, VoxelBuffer, VoxelDescriptorSet},
     vulkano::{
         command_buffer::{
             CommandBufferBeginInfo, CommandBufferLevel, CommandBufferUsage, CopyBufferToImageInfo,
@@ -41,11 +38,10 @@ impl application::Plugin for AssetManagerPlugin {
 }
 
 fn load_voxels(
-    voxel_query: Query<(Entity, &RawTexture), Changed<RawTexture>>,
+    voxel_query: Query<(Entity, &RawTexture, &Material), Changed<RawTexture>>,
     descriptor_set_allocator: Res<DescriptorSetAllocator>,
     memory_allocator: Res<StandardMemoryAllocator>,
     command_buffer_allocator: Res<CommandBufferAllocator>,
-    pipeline: Res<PipelineSetup>,
     device: Res<RenderDevice>,
     mut previous_frame_end: NonSendMut<PreviousFrameEnd>,
     mut commadns: Commands,
@@ -65,12 +61,12 @@ fn load_voxels(
     )
     .unwrap();
 
-    for (entity, voxel_mesh) in voxel_query.iter() {
+    for (entity, voxel_mesh, material) in voxel_query.iter() {
         let voxel_buffer =
             VoxelBuffer::new(&memory_allocator, voxel_mesh.data.clone(), voxel_mesh.size);
 
         use rendering::vulkano::pipeline::Pipeline;
-        let layout = &pipeline.pipeline.layout().set_layouts()[1];
+        let layout = &material.pipeline.layout().set_layouts()[1];
 
         let image = Image::new(
             memory_allocator.0.clone(),
