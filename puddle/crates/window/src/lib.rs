@@ -21,7 +21,10 @@ pub struct WindowEventHandler {
 impl Plugin for WindowPlugin {
     fn build(&mut self, app: &mut Application) {
         let event_loop = EventLoop::new().unwrap();
-        let window = Window::new(&event_loop).unwrap();
+        let mut window = Window::new(&event_loop).unwrap();
+
+        window.set_cursor_grab(winit::window::CursorGrabMode::Confined);
+        window.set_cursor_visible(false);
 
         let puddle_window = PuddleWindow {
             window: Arc::new(window),

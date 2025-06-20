@@ -47,7 +47,7 @@ struct Uniforms {
 
 
 fn getVoxel(c : vec3<i32>) -> Voxel {
-        let pos = vec3<i32>(c.x, -c.y, c.z);
+        let pos = vec3<i32>(c.x, -c.y, c.z / 2);
         let val = textureLoad(voxel_data, pos, 0).r;
 
         var voxel = Voxel();
@@ -77,7 +77,7 @@ struct Voxel {
 
 fn raycast(origin : vec3<f32>, direction : vec3<f32>) -> RaycastResult  {
 
-    let MAX_RAY_STEPPS : i32 = 1500;
+    let MAX_RAY_STEPPS : i32 = 500;
 
     var mapPos = vec3<i32>(floor(origin));
     var deltaDist = abs(vec3(length(direction)) / direction);
@@ -162,20 +162,13 @@ fn fs_main(in : VertexOutput) -> @location(0) vec4<f32> {
         return vec4(0.0);
     }
 
-    let sun_direction = normalize(vec3(cos(uniforms.time / 100.0), -1.0, sin(uniforms.time / 100.0)));
-
-    let ambient_shadow = vec3(dot(sun_direction, normalize(RayRes.normal)) / 8.0);
-
-    
     switch uniforms.mode {
         case 1: {
             return vec4(vec3(f32(RayRes.stepps) / 1000.0), 1.0);
         }
         default: {
             return vec4(
-                RayRes.color.rgb 
-                -ambient_shadow
-                -vec3(pow(RayRes.distance/1000.0, 1.5)),
+                vec3(dot(RayRes.normal.rgb, vec3(1.0, 1.0, 0.0)) / 10.0),
                 1.0);
             }
         }

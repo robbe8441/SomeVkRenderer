@@ -97,7 +97,7 @@ impl Plugin for RenderPlugin {
             width: size.width,
             height: size.height,
 
-            present_mode: wgpu::PresentMode::AutoVsync,
+            present_mode: wgpu::PresentMode::Fifo,
             alpha_mode: wgpu::CompositeAlphaMode::Auto,
             view_formats: vec![wgpu::TextureFormat::Bgra8Unorm],
             desired_maximum_frame_latency: 0,

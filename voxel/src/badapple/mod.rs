@@ -17,9 +17,9 @@ pub fn bad_apple(
         return;
     }
 
-    let frame = (frame.elapsed().as_secs_f64() * 12.0).floor() as i32;
+    let frame = (frame.elapsed().as_secs_f64() * 60.0).floor() as i32;
 
-    let image_path = format!("frames/{:04}.png", frame);
+    let image_path = format!("frames/{}.png", frame);
 
     let image = match image::open(image_path.clone()) {
         Ok(r) => r,

@@ -38,7 +38,8 @@ fn vs_main(
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-    return textureSample(sky_texture, texture_sampler, in.uv_cords);
+    // return textureSample(sky_texture, texture_sampler, in.uv_cords) * 1000.0;
+    return vec4(1.0);
 }
 
 

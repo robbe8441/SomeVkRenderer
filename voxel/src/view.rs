@@ -115,11 +115,9 @@ pub fn add_view(
     #[resource] camera_bind_group_layout: &CameraBindGroupLayout,
     commands: &mut CommandBuffer,
 ) {
-    println!("{}", MAP_SIZE.pow(3) * std::mem::size_of::<u8>() as u32);
-
     let tex_size = wgpu::Extent3d {
-        width: 962,
-        height: 720,
+        width: 256,
+        height: 144,
         depth_or_array_layers: 1,
     };
 
